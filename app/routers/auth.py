@@ -7,8 +7,9 @@ from ..database import get_db
 from ..auth_service import AuthService
 from ..schemas import (
     UserLogin, UserResponse, TokenResponse, 
-    RefreshTokenRequest, MessageResponse, ErrorResponse
+    RefreshTokenRequest, MessageResponse, ErrorResponse, UserRegister
 )
+from ..models import UserRole
 from ..config import settings
 
 router = APIRouter()
@@ -45,6 +46,12 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         )
     
     return user
+
+def get_admin_user(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Dependencia para verificar que el usuario actual sea administrador"""
+    auth_service = AuthService(db)
+    auth_service.require_admin_role(current_user)
+    return current_user
 
 @router.post(
     "/login",
@@ -158,12 +165,70 @@ async def get_user_info(current_user = Depends(get_current_user)):
         email=current_user.email,
         full_name=current_user.full_name,
         is_active=current_user.is_active,
-        is_superuser=current_user.is_superuser,
+        role=current_user.role.value,
         created_at=current_user.created_at,
         last_login=current_user.last_login
     )
 
 # Endpoint adicional para verificar el estado del token
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    summary="Registrar nuevo usuario",
+    description="Permite a administradores registrar nuevos usuarios en el sistema",
+    responses={
+        201: {"description": "Usuario creado exitosamente", "model": UserResponse},
+        400: {"description": "Datos inválidos o usuario ya existe", "model": ErrorResponse},
+        403: {"description": "Acceso denegado - Se requieren privilegios de administrador", "model": ErrorResponse},
+        401: {"description": "Token inválido", "model": ErrorResponse},
+        422: {"description": "Error de validación", "model": ErrorResponse}
+    },
+    status_code=status.HTTP_201_CREATED
+)
+async def register_user(
+    user_data: UserRegister, 
+    admin_user = Depends(get_admin_user), 
+    db: Session = Depends(get_db)
+):
+    """Registrar un nuevo usuario (solo administradores)"""
+    auth_service = AuthService(db)
+    
+    try:
+        # Convertir el enum de string a UserRole
+        role = UserRole.ADMIN if user_data.role == "admin" else UserRole.USER
+        
+        # Crear el usuario
+        new_user = auth_service.create_user(
+            username=user_data.username,
+            email=user_data.email,
+            password=user_data.password,
+            full_name=user_data.full_name,
+            role=role,
+            is_active=user_data.active
+        )
+        
+        return UserResponse(
+            id=new_user.id,
+            username=new_user.username,
+            email=new_user.email,
+            full_name=new_user.full_name,
+            role=new_user.role.value,
+            is_active=new_user.is_active,
+            created_at=new_user.created_at,
+            last_login=new_user.last_login
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno del servidor al crear el usuario"
+        )
+
 @router.get(
     "/verify-token",
     response_model=MessageResponse,
@@ -175,7 +240,7 @@ async def get_user_info(current_user = Depends(get_current_user)):
     }
 )
 async def verify_token(current_user = Depends(get_current_user)):
-    """Endpoint para verificar la validez del token"""
+    """Verificar si el token de acceso es válido"""
     return MessageResponse(
         message=f"Token válido para el usuario: {current_user.username}"
     )

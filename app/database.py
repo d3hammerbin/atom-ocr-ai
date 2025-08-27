@@ -33,6 +33,7 @@ def get_db() -> Generator[Session, None, None]:
 def create_test_user():
     """Crear un usuario de prueba para desarrollo"""
     from .auth_service import AuthService
+    from .models import UserRole
     
     db = SessionLocal()
     try:
@@ -42,15 +43,14 @@ def create_test_user():
         existing_user = auth_service.get_user_by_username("admin")
         if not existing_user:
             # Crear usuario administrador de prueba
-            user_data = {
-                "username": "admin",
-                "email": "admin@atomocr.ai",
-                "password": "admin123",
-                "full_name": "Administrador del Sistema",
-                "is_superuser": True
-            }
-            
-            user = auth_service.create_user(**user_data)
+            user = auth_service.create_user(
+                username="admin",
+                email="admin@atomocr.ai",
+                password="admin123",
+                full_name="Administrador del Sistema",
+                role=UserRole.ADMIN,
+                is_active=True
+            )
             print(f"Usuario de prueba creado: {user.username} (ID: {user.id})")
         else:
             print("Usuario de prueba ya existe")

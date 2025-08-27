@@ -1,6 +1,13 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
 from datetime import datetime
+from enum import Enum
+
+# Enums
+class UserRoleEnum(str, Enum):
+    """Enum para roles de usuario en esquemas Pydantic"""
+    ADMIN = "admin"
+    USER = "user"
 
 # Esquemas para autenticación
 class UserLogin(BaseModel):
@@ -33,14 +40,41 @@ class UserCreate(BaseModel):
             }
         }
 
+class UserRegister(BaseModel):
+    """Esquema para registro de usuarios por administradores"""
+    username: str = Field(..., min_length=3, max_length=50, description="Nombre de usuario único")
+    email: EmailStr = Field(..., description="Correo electrónico del usuario")
+    password: str = Field(..., min_length=6, max_length=100, description="Contraseña del usuario")
+    full_name: Optional[str] = Field(None, max_length=100, description="Nombre completo del usuario")
+    role: UserRoleEnum = Field(..., description="Rol del usuario (admin o user)")
+    active: bool = Field(True, description="Estado activo del usuario")
+    
+    @validator('username')
+    def validate_username(cls, v):
+        if not v.replace('_', '').replace('-', '').isalnum():
+            raise ValueError('El username solo puede contener letras, números, guiones y guiones bajos')
+        return v.lower()
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "username": "nuevo_usuario",
+                "email": "nuevo@ejemplo.com",
+                "password": "contraseña123",
+                "full_name": "Nuevo Usuario",
+                "role": "user",
+                "active": True
+            }
+        }
+
 class UserResponse(BaseModel):
     """Esquema para respuesta de información de usuario"""
     id: int
     username: str
     email: str
     full_name: Optional[str] = None
+    role: str
     is_active: bool
-    is_superuser: bool
     created_at: datetime
     last_login: Optional[datetime] = None
     
@@ -52,8 +86,8 @@ class UserResponse(BaseModel):
                 "username": "admin",
                 "email": "admin@atomocr.ai",
                 "full_name": "Administrador del Sistema",
+                "role": "admin",
                 "is_active": True,
-                "is_superuser": True,
                 "created_at": "2024-01-15T10:30:00Z",
                 "last_login": "2024-01-15T15:45:00Z"
             }

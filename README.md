@@ -174,9 +174,42 @@ Authorization: Bearer <access_token>
   "email": "admin@atomocr.ai",
   "full_name": "Administrador del Sistema",
   "is_active": true,
-  "is_superuser": true,
+  "role": "admin",
   "created_at": "2024-01-15T10:30:00Z",
   "last_login": "2024-01-15T15:45:00Z"
+}
+```
+
+#### POST `/api/v1/register`
+Registra un nuevo usuario en el sistema. **Requiere autenticación y rol de administrador.**
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "username": "nuevo_usuario",
+  "email": "usuario@ejemplo.com",
+  "password": "contraseña_segura",
+  "full_name": "Nombre Completo",
+  "role": "user"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 2,
+  "username": "nuevo_usuario",
+  "email": "usuario@ejemplo.com",
+  "full_name": "Nombre Completo",
+  "is_active": true,
+  "role": "user",
+  "created_at": "2024-01-15T16:30:00Z",
+  "last_login": null
 }
 ```
 
@@ -278,7 +311,7 @@ PORT=8000
 - `hashed_password`: String(255)
 - `full_name`: String(100)
 - `is_active`: Boolean
-- `is_superuser`: Boolean
+- `role`: Enum('admin', 'user') - Sistema de roles
 - `created_at`: DateTime
 - `updated_at`: DateTime
 - `last_login`: DateTime
@@ -332,7 +365,8 @@ docker-compose logs -f atom-ocr-api
    - Nginx como proxy reverso
 
 2. **Funcionalidades adicionales**
-   - Registro de usuarios
+   - ✅ Registro de usuarios (implementado)
+   - ✅ Sistema de roles básico (implementado)
    - Recuperación de contraseñas
    - Roles y permisos avanzados
    - Rate limiting

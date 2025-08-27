@@ -5,8 +5,9 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import secrets
 
-from .models import User, RefreshToken
+from .models import User, RefreshToken, UserRole
 from .config import settings
+from fastapi import HTTPException, status
 
 class AuthService:
     """Servicio de autenticación para manejo de usuarios y tokens"""
@@ -52,7 +53,8 @@ class AuthService:
         return user
     
     def create_user(self, username: str, email: str, password: str, 
-                   full_name: Optional[str] = None, is_superuser: bool = False) -> User:
+                   full_name: Optional[str] = None, role: UserRole = UserRole.USER, 
+                   is_active: bool = True) -> User:
         """Crear nuevo usuario"""
         # Verificar que no exista el usuario
         if self.get_user_by_username(username):
@@ -68,7 +70,8 @@ class AuthService:
             email=email,
             hashed_password=hashed_password,
             full_name=full_name,
-            is_superuser=is_superuser
+            role=role,
+            is_active=is_active
         )
         
         self.db.add(user)
@@ -76,6 +79,33 @@ class AuthService:
         self.db.refresh(user)
         
         return user
+    
+    def verify_admin_role(self, user: User) -> bool:
+        """Verificar si el usuario tiene rol de administrador"""
+        return user.role == UserRole.ADMIN
+    
+    def require_admin_role(self, user: User) -> None:
+        """Requerir que el usuario tenga rol de administrador, lanza excepción si no"""
+        if not self.verify_admin_role(user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acceso denegado. Se requieren privilegios de administrador"
+            )
+    
+    def get_current_user_from_token(self, token: str) -> Optional[User]:
+        """Obtener usuario actual desde token JWT"""
+        try:
+            payload = self.verify_token(token)
+            if payload is None:
+                return None
+            
+            user_id = payload.get("user_id")
+            if user_id is None:
+                return None
+            
+            return self.get_user_by_id(user_id)
+        except Exception:
+            return None
     
     def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
         """Crear token JWT de acceso"""

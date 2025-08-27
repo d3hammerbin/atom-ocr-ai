@@ -7,24 +7,31 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
-### Corregido
-- Configuración de expiración de tokens JWT en archivo .env
-- Problema de tokens que expiraban inmediatamente después del login
-- Validación de tokens en endpoints protegidos (/api/v1/userinfo, /api/v1/verify-token)
+### Añadido
+- Sistema de roles de usuario (admin/user) con enum UserRole
+- Endpoint POST /api/v1/register para registro de nuevos usuarios
+- Función de autorización require_admin_role para endpoints administrativos
+- Validaciones de unicidad para username y email en registro
+- Esquema UserCreate con validaciones de contraseña y email
+- Documentación Swagger actualizada para nuevo endpoint de registro
 
 ### Cambiado
-- Duración de ACCESS_TOKEN_EXPIRE_MINUTES aumentada de 30 a 480 minutos (8 horas) para facilitar pruebas
-- Configuración JWT documentada en README.md con recomendaciones de seguridad
+- Modelo User: reemplazado campo is_superuser por role (UserRole enum)
+- Esquema UserResponse: actualizado para usar campo role en lugar de is_superuser
+- Endpoint /api/v1/userinfo: corregido para devolver role en lugar de is_superuser
+- README.md: actualizada documentación con nuevo endpoint y sistema de roles
+- Especificaciones técnicas: actualizada estructura de tabla users
 
-### Añadido
-- Scripts de depuración en colección Postman para endpoints de autenticación
-- Logging detallado en scripts de prueba para identificación de problemas
-- Validaciones de presencia de tokens en requests de Postman
-- Tests automatizados en Postman para verificar guardado correcto de tokens
+### Corregido
+- AttributeError en endpoint /api/v1/userinfo por referencia a campo obsoleto is_superuser
+- Configuración de expiración de tokens JWT en archivo .env
+- Problema de tokens que expiraban inmediatamente después del login
+- Validación de tokens en endpoints protegidos
 
 ### Técnico
-- Identificación de conflicto entre configuración en config.py y variables de entorno
-- Priorización correcta de variables de entorno sobre valores por defecto en código
+- Migración automática de base de datos para cambio de is_superuser a role
+- Implementación de decorador de autorización para roles administrativos
+- Validaciones de integridad de datos en registro de usuarios
 - Mejora en la gestión de configuración JWT para entornos de desarrollo y producción
 
 ## [1.0.0] - 2025-01-27
