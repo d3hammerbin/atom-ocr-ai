@@ -145,6 +145,69 @@
             opacity: 0.8;
         }
 
+        /* Mask Toolbar Styles */
+        .mask-toolbar {
+            background: #2d2d44;
+            padding: 15px 20px;
+            border-bottom: 2px solid #404057;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mask-control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mask-control-group label {
+            color: #e0e0e0;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .mask-select {
+            padding: 8px 12px;
+            background: #3a3a52;
+            border: 1px solid #404057;
+            border-radius: 5px;
+            color: #e0e0e0;
+            font-size: 14px;
+            min-width: 150px;
+            cursor: pointer;
+        }
+
+        .mask-select:focus {
+            outline: none;
+            border-color: #64b5f6;
+        }
+
+        .mask-toggle {
+            padding: 8px 16px;
+            background: #64b5f6;
+            color: #1e1e2e;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .mask-toggle:hover {
+            background: #42a5f5;
+        }
+
+        .mask-toggle.disabled {
+            background: #404057;
+            color: #666;
+            cursor: not-allowed;
+        }
+
         .folder-selector {
             background: #3a3a52;
             border-radius: 8px;
@@ -250,14 +313,25 @@
             border: 1px solid transparent;
         }
 
-        .image-item:hover {
+        .image-item:hover:not(.selected) {
             background: #4a4a62;
         }
 
         .image-item.selected {
-            background: #64b5f6;
+            background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%) !important;
+            color: #1e1e2e !important;
+            border-color: #64b5f6 !important;
+            box-shadow: 0 2px 8px rgba(100, 181, 246, 0.3) !important;
+            transform: translateX(3px) !important;
+        }
+        
+        .image-item.selected .image-name {
+            font-weight: 600;
+        }
+        
+        .image-item.selected .image-status {
+            background: rgba(30, 30, 46, 0.2);
             color: #1e1e2e;
-            border-color: #42a5f5;
         }
 
         .image-status {
@@ -585,6 +659,28 @@
                 <p>Carga, recorta y redimensiona tus imágenes con tema oscuro</p>
             </div>
 
+            <!-- Mask Toolbar -->
+            <div class="mask-toolbar">
+                <div class="mask-control-group">
+                    <label for="credentialType">🎭 Tipo de Credencial:</label>
+                    <select id="credentialType" class="mask-select">
+                        <option value="">Seleccionar tipo...</option>
+                        <option value="1">Tipo 1</option>
+                        <option value="2">Tipo 2</option>
+                        <option value="3">Tipo 3</option>
+                    </select>
+                </div>
+                <div class="mask-control-group">
+                    <label for="credentialSide">📄 Lado de Credencial:</label>
+                    <select id="credentialSide" class="mask-select">
+                        <option value="">Seleccionar lado...</option>
+                        <option value="front">Delantera (Front)</option>
+                        <option value="back">Trasera (Back)</option>
+                    </select>
+                </div>
+                <button id="toggleMask" class="mask-toggle disabled">Mostrar Máscara</button>
+            </div>
+
             <div class="canvas-area">
                 <div class="canvas-container hidden" id="canvasContainer">
                     <div class="crop-info">Área de Crop: 790 × 490 px</div>
@@ -635,9 +731,18 @@
                 this.processedImages = new Set();
                 this.currentImageIndex = -1;
                 this.currentImageFile = null;
+                
+                // Mask system properties
+                this.maskImage = null;
+                this.maskVisible = false;
+                this.currentMaskType = '';
+                this.currentMaskSide = '';
 
                 this.initializeEventListeners();
                 this.updateProgressStats();
+                
+                // Deshabilitar botones de acción inicialmente
+                this.updateActionButtonsState();
             }
 
             // Toast notification system
@@ -699,6 +804,11 @@
                 this.canvas.addEventListener('mouseup', this.endDrag.bind(this));
                 this.canvas.addEventListener('wheel', this.handleWheel.bind(this));
 
+                // Mask controls
+                document.getElementById('credentialType').addEventListener('change', this.onMaskControlChange.bind(this));
+                document.getElementById('credentialSide').addEventListener('change', this.onMaskControlChange.bind(this));
+                document.getElementById('toggleMask').addEventListener('click', this.toggleMaskVisibility.bind(this));
+
                 // Collapsible controls
                 document.getElementById('controlsHeader').addEventListener('click', this.toggleControls.bind(this));
 
@@ -738,6 +848,16 @@
                 const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
 
                 try {
+                    // Resetear selectores de máscara al cargar nueva carpeta
+                    this.resetMaskSelectors();
+                    
+                    // Limpiar canvas al cargar nueva carpeta
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.currentImage = null;
+                    this.originalImage = null;
+                    this.currentImageFile = null;
+                    this.currentImageIndex = -1;
+                    
                     for await (const [name, handle] of this.selectedFolder.entries()) {
                         if (handle.kind === 'file') {
                             const extension = name.toLowerCase().substring(name.lastIndexOf('.'));
@@ -797,6 +917,11 @@
                     const imageItem = document.createElement('div');
                     imageItem.className = 'image-item';
                     imageItem.dataset.index = index;
+                    
+                    // Mantener la selección actual
+                    if (index === this.currentImageIndex) {
+                        imageItem.classList.add('selected');
+                    }
 
                     const status = document.createElement('div');
                     status.className = 'image-status';
@@ -962,6 +1087,28 @@
                 );
 
                 this.ctx.restore();
+                
+                // Draw mask overlay if visible
+                this.drawMask();
+            }
+            
+            drawMask() {
+                if (!this.maskVisible || !this.maskImage) return;
+                
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.6; // Semi-transparent red overlay
+                this.ctx.globalCompositeOperation = 'multiply';
+                
+                // Draw mask at fixed size (709x490) covering the entire canvas
+                this.ctx.drawImage(
+                    this.maskImage,
+                    0,
+                    0,
+                    this.cropWidth,
+                    this.cropHeight
+                );
+                
+                this.ctx.restore();
             }
 
             startDrag(e) {
@@ -1075,14 +1222,37 @@
                     console.log('Current image file:', this.currentImageFile);
                     console.log('File handle available:', !!this.currentImageFile.handle);
 
-                    // Create final canvas with current transformations
+                    // Create clean canvas with only the image (no mask)
                     const finalCanvas = document.createElement('canvas');
                     finalCanvas.width = this.cropWidth;
                     finalCanvas.height = this.cropHeight;
                     const finalCtx = finalCanvas.getContext('2d');
+                    
+                    // Clear canvas with white background
+                    finalCtx.fillStyle = '#FFFFFF';
+                    finalCtx.fillRect(0, 0, this.cropWidth, this.cropHeight);
 
-                    // Draw current canvas content
-                    finalCtx.drawImage(this.canvas, 0, 0);
+                    // Draw only the image with current transformations (no mask)
+                    if (this.currentImage) {
+                        finalCtx.save();
+                        
+                        const centerX = this.imageX + (this.originalImage.width * this.scale) / 2;
+                        const centerY = this.imageY + (this.originalImage.height * this.scale) / 2;
+                        
+                        finalCtx.translate(centerX, centerY);
+                        finalCtx.rotate((this.rotation * Math.PI) / 180);
+                        finalCtx.translate(-centerX, -centerY);
+                        
+                        finalCtx.drawImage(
+                            this.currentImage,
+                            this.imageX,
+                            this.imageY,
+                            this.originalImage.width * this.scale,
+                            this.originalImage.height * this.scale
+                        );
+                        
+                        finalCtx.restore();
+                    }
 
                     // Convert to blob (preserve original format if possible)
                     const originalFile = await this.currentImageFile.handle.getFile();
@@ -1129,6 +1299,76 @@
                 content.classList.toggle('collapsed');
                 icon.classList.toggle('rotated');
             }
+            
+            // Mask system methods
+            onMaskControlChange() {
+                const typeSelect = document.getElementById('credentialType');
+                const sideSelect = document.getElementById('credentialSide');
+                const toggleBtn = document.getElementById('toggleMask');
+                
+                const type = typeSelect.value;
+                const side = sideSelect.value;
+                
+                if (type && side) {
+                    this.currentMaskType = type;
+                    this.currentMaskSide = side;
+                    this.loadMask(type, side);
+                    toggleBtn.classList.remove('disabled');
+                } else {
+                    toggleBtn.classList.add('disabled');
+                    this.maskVisible = false;
+                }
+                
+                // Actualizar estado de botones de acción
+                this.updateActionButtonsState();
+                this.drawImage();
+            }
+            
+            async loadMask(type, side) {
+                try {
+                    const maskPath = `./samples/mask/editables/t${type}_${side}.png`;
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        this.maskImage = img;
+                        this.showToast(`Máscara cargada: Tipo ${type} - ${side === 'front' ? 'Delantera' : 'Trasera'}`, 'success', 2000);
+                        
+                        // Auto-show mask when loaded
+                        if (!this.maskVisible) {
+                            this.toggleMaskVisibility();
+                        } else {
+                            this.drawImage();
+                        }
+                    };
+                    
+                    img.onerror = () => {
+                        this.showToast(`Error al cargar la máscara: ${maskPath}`, 'error');
+                        console.error('Failed to load mask:', maskPath);
+                    };
+                    
+                    img.src = maskPath;
+                } catch (error) {
+                    this.showToast('Error al cargar la máscara', 'error');
+                    console.error('Error loading mask:', error);
+                }
+            }
+            
+            toggleMaskVisibility() {
+                const toggleBtn = document.getElementById('toggleMask');
+                
+                if (toggleBtn.classList.contains('disabled')) {
+                    this.showToast('Selecciona tipo y lado de credencial primero', 'warning');
+                    return;
+                }
+                
+                this.maskVisible = !this.maskVisible;
+                toggleBtn.textContent = this.maskVisible ? 'Ocultar Máscara' : 'Mostrar Máscara';
+                
+                this.drawImage();
+                
+                const status = this.maskVisible ? 'visible' : 'oculta';
+                this.showToast(`Máscara ${status}`, 'info', 1500);
+            }
 
             updateProgressStats() {
                 const total = this.imageFiles.length;
@@ -1138,6 +1378,60 @@
                 document.getElementById('totalImages').textContent = total;
                 document.getElementById('processedImages').textContent = processed;
                 document.getElementById('pendingImages').textContent = pending;
+            }
+            
+            // Control del estado de los botones de acción
+            updateActionButtonsState() {
+                const typeSelect = document.getElementById('credentialType');
+                const sideSelect = document.getElementById('credentialSide');
+                const bothSelected = typeSelect.value !== '' && sideSelect.value !== '';
+                
+                const actionButtons = [
+                    'cropBtn',
+                    'applyBtn', 
+                    'saveBtn',
+                    'centerBtn',
+                    'resetBtn'
+                ];
+                
+                actionButtons.forEach(buttonId => {
+                    const button = document.getElementById(buttonId);
+                    if (button) {
+                        button.disabled = !bothSelected;
+                        if (bothSelected) {
+                            button.classList.remove('disabled');
+                        } else {
+                            button.classList.add('disabled');
+                        }
+                    }
+                });
+            }
+            
+            // Resetear selectores de máscara
+            resetMaskSelectors() {
+                const typeSelect = document.getElementById('credentialType');
+                const sideSelect = document.getElementById('credentialSide');
+                
+                typeSelect.value = '';
+                sideSelect.value = '';
+                
+                // Ocultar máscara si está visible
+                if (this.maskVisible) {
+                    this.maskVisible = false;
+                    const toggleBtn = document.getElementById('toggleMask');
+                    toggleBtn.textContent = 'Mostrar Máscara';
+                }
+                
+                // Limpiar imagen de máscara
+                this.maskImage = null;
+                this.currentMaskType = null;
+                this.currentMaskSide = null;
+                
+                // Actualizar estado de botones
+                this.updateActionButtonsState();
+                
+                // Redibujar canvas sin máscara
+                this.drawImage();
             }
         }
 

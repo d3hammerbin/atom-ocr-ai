@@ -1,0 +1,491 @@
+{
+	"info": {
+		"_postman_id": "atom-ocr-ai-2025",
+		"name": "Atom OCR AI - API Collection 2025 (Renovada)",
+		"description": "Colección completa renovada para la API de Atom OCR AI con todos los endpoints disponibles, debugging avanzado y manejo robusto de tokens JWT",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "atom-ocr-ai",
+		"version": {
+			"major": 2,
+			"minor": 0,
+			"patch": 0
+		}
+	},
+	"item": [
+		{
+			"name": "🔐 Autenticación",
+			"description": "Endpoints para autenticación y gestión de tokens JWT",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log('🚀 === INICIANDO LOGIN === 🚀');",
+									"console.log('Timestamp:', new Date().toISOString());",
+									"console.log('Limpiando tokens anteriores...');",
+									"pm.environment.unset('access_token');",
+									"pm.environment.unset('refresh_token');",
+									"pm.environment.unset('token_expires_at');",
+									"console.log('✅ Tokens anteriores limpiados.');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA LOGIN === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"console.log('Response Time:', pm.response.responseTime + 'ms');",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('🎉 LOGIN EXITOSO 🎉');",
+									"    let response = pm.response.json();",
+									"    pm.environment.set('access_token', response.access_token);",
+									"    pm.environment.set('refresh_token', response.refresh_token);",
+									"    const expiresAt = new Date(Date.now() + (response.expires_in * 1000));",
+									"    pm.environment.set('token_expires_at', expiresAt.toISOString());",
+									"    console.log('✅ Tokens guardados correctamente');",
+									"    pm.test('✅ Login successful', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ LOGIN FALLÓ - Status:', pm.response.code);",
+									"    pm.test('❌ Login failed', () => pm.expect.fail('Login failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": ["{{base_url}}"],
+							"path": ["login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Info",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log('👤 === PRE-REQUEST USER INFO === 👤');",
+									"const token = pm.environment.get('access_token');",
+									"console.log('🔧 Access Token disponible:', token ? 'SÍ' : 'NO');",
+									"if (!token) console.log('🚨 WARNING: No access token found!');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA USER INFO === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('🎉 USER INFO OBTENIDA EXITOSAMENTE 🎉');",
+									"    let response = pm.response.json();",
+									"    pm.environment.set('current_user_id', response.id);",
+									"    pm.environment.set('current_user_role', response.role);",
+									"    console.log('👤 Usuario:', response.username, '- Rol:', response.role);",
+									"    pm.test('✅ User info retrieved', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ ERROR - Status:', pm.response.code);",
+									"    if (pm.response.code === 401) console.log('💡 SUGERENCIA: Ejecuta Login primero');",
+									"    pm.test('❌ User info failed', () => pm.expect.fail('Request failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/userinfo",
+							"host": ["{{base_url}}"],
+							"path": ["userinfo"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log('🔄 === PRE-REQUEST REFRESH TOKEN === 🔄');",
+									"const refreshToken = pm.environment.get('refresh_token');",
+									"console.log('🔧 Refresh Token disponible:', refreshToken ? 'SÍ' : 'NO');",
+									"if (!refreshToken) console.log('🚨 WARNING: No refresh token found!');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA REFRESH TOKEN === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('🎉 TOKEN REFRESH EXITOSO 🎉');",
+									"    let response = pm.response.json();",
+									"    pm.environment.set('access_token', response.access_token);",
+									"    const expiresAt = new Date(Date.now() + (response.expires_in * 1000));",
+									"    pm.environment.set('token_expires_at', expiresAt.toISOString());",
+									"    console.log('✅ Nuevo token guardado');",
+									"    pm.test('✅ Token refresh successful', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ TOKEN REFRESH FALLÓ - Status:', pm.response.code);",
+									"    pm.test('❌ Token refresh failed', () => pm.expect.fail('Refresh failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["refresh"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register User (Admin Only)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log('👥 === PRE-REQUEST REGISTER USER === 👥');",
+									"const token = pm.environment.get('access_token');",
+									"const userRole = pm.environment.get('current_user_role');",
+									"console.log('🔧 Token disponible:', token ? 'SÍ' : 'NO');",
+									"console.log('🔧 Rol actual:', userRole || 'NO DETERMINADO');",
+									"if (userRole !== 'admin') console.log('⚠️ WARNING: Se requieren privilegios de admin');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA REGISTER USER === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 201) {",
+									"    console.log('🎉 USUARIO REGISTRADO EXITOSAMENTE 🎉');",
+									"    let response = pm.response.json();",
+									"    console.log('👤 Usuario creado:', response.username);",
+									"    pm.test('✅ User registered successfully', () => pm.response.to.have.status(201));",
+									"} else {",
+									"    console.log('❌ REGISTRO FALLÓ - Status:', pm.response.code);",
+									"    if (pm.response.code === 403) console.log('🚫 Acceso denegado - Se requieren privilegios de admin');",
+									"    pm.test('❌ Registration failed', () => pm.expect.fail('Registration failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"nuevo_usuario\",\n    \"email\": \"nuevo@ejemplo.com\",\n    \"password\": \"password123\",\n    \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/register",
+							"host": ["{{base_url}}"],
+							"path": ["register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA LOGOUT === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('🎉 LOGOUT EXITOSO 🎉');",
+									"    console.log('🧹 Limpiando tokens del entorno...');",
+									"    pm.environment.unset('access_token');",
+									"    pm.environment.unset('refresh_token');",
+									"    pm.environment.unset('token_expires_at');",
+									"    pm.environment.unset('current_user_id');",
+									"    pm.environment.unset('current_user_role');",
+									"    console.log('✅ Tokens limpiados correctamente');",
+									"    pm.test('✅ Logout successful', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ LOGOUT FALLÓ - Status:', pm.response.code);",
+									"    pm.test('❌ Logout failed', () => pm.expect.fail('Logout failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/logout",
+							"host": ["{{base_url}}"],
+							"path": ["logout"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "👥 Gestión de Clientes",
+			"description": "Endpoints para gestionar clientes y aplicaciones",
+			"item": [
+				{
+					"name": "Create Client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA CREATE CLIENT === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 201) {",
+									"    console.log('🎉 CLIENTE CREADO EXITOSAMENTE 🎉');",
+									"    let response = pm.response.json();",
+									"    if (response.id) {",
+									"        pm.environment.set('last_created_client_id', response.id);",
+									"        console.log('💾 Client ID guardado:', response.id);",
+									"    }",
+									"    pm.test('✅ Client created successfully', () => pm.response.to.have.status(201));",
+									"} else {",
+									"    console.log('❌ CREACIÓN DE CLIENTE FALLÓ - Status:', pm.response.code);",
+									"    pm.test('❌ Client creation failed', () => pm.expect.fail('Client creation failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Mi Aplicación OCR\",\n    \"description\": \"Aplicación para procesamiento de documentos\",\n    \"redirect_uris\": [\"http://localhost:3000/callback\"],\n    \"allowed_origins\": [\"http://localhost:3000\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/clients",
+							"host": ["{{base_url}}"],
+							"path": ["clients"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Clients",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA LIST CLIENTS === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('✅ LISTA DE CLIENTES OBTENIDA');",
+									"    let response = pm.response.json();",
+									"    console.log('📋 Total de clientes:', response.length || 0);",
+									"    pm.test('✅ Clients list retrieved', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ ERROR AL OBTENER CLIENTES - Status:', pm.response.code);",
+									"    pm.test('❌ Clients list failed', () => pm.expect.fail('Failed to get clients'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/clients",
+							"host": ["{{base_url}}"],
+							"path": ["clients"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔧 Sistema",
+			"description": "Endpoints para información del sistema y salud",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('🏥 === RESPUESTA HEALTH CHECK === 🏥');",
+									"console.log('Status Code:', pm.response.code);",
+									"console.log('Response Time:', pm.response.responseTime + 'ms');",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('✅ SISTEMA SALUDABLE');",
+									"    try {",
+									"        let response = pm.response.json();",
+									"        console.log('🏥 Estado del sistema:', JSON.stringify(response, null, 2));",
+									"    } catch (e) {",
+									"        console.log('Response text:', pm.response.text());",
+									"    }",
+									"    pm.test('✅ System is healthy', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('🚨 SISTEMA CON PROBLEMAS - Status:', pm.response.code);",
+									"    pm.test('❌ System health check failed', () => pm.expect.fail('Health check failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/system/health",
+							"host": ["{{base_url}}"],
+							"path": ["system", "health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "System Version",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📋 === RESPUESTA SYSTEM VERSION === 📋');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('✅ VERSIÓN DEL SISTEMA OBTENIDA');",
+									"    try {",
+									"        let response = pm.response.json();",
+									"        console.log('📋 Versión:', response.version || 'No disponible');",
+									"        console.log('📋 Build:', response.build || 'No disponible');",
+									"    } catch (e) {",
+									"        console.log('Response text:', pm.response.text());",
+									"    }",
+									"    pm.test('✅ System version retrieved', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ ERROR AL OBTENER VERSIÓN - Status:', pm.response.code);",
+									"    pm.test('❌ System version failed', () => pm.expect.fail('Version check failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/system/version",
+							"host": ["{{base_url}}"],
+							"path": ["system", "version"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

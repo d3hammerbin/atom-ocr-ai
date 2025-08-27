@@ -1,0 +1,29 @@
+# FastAPI y servidor ASGI
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Base de datos
+sqlalchemy==2.0.23
+alembic==1.12.1
+
+# Autenticación y seguridad
+bcrypt==4.0.1
+passlib==1.7.4
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.6
+
+# Validación y configuración
+pydantic==2.5.0
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# Utilidades
+python-dotenv==1.0.0
+
+# Desarrollo y testing (opcional)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Documentación adicional
+markdown==3.5.1
