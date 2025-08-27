@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  atom-ocr-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: atom-ocr-api
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=America/Mexico_City
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./atom_ocr_ai.db:/app/atom_ocr_ai.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - atom-ocr-network
+
+networks:
+  atom-ocr-network:
+    driver: bridge
+
+volumes:
+  atom-ocr-data:
+    driver: local
