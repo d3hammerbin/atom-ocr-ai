@@ -23,6 +23,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Esquema UserCreate con validaciones de contraseña y email
 - Documentación Swagger actualizada para nuevo endpoint de registro
 - Sistema completo de gestión de clientes para credenciales de identificación
+- Sistema de control de estado dinámico en Image Crop Editor
+- Limpieza automática de canvas al cargar nueva carpeta de imágenes
+- Indicador visual mejorado para selección de imágenes con gradiente y sombra
+- Persistencia de selección visual en lista de imágenes
 - Modelo Client con relación a User y campos para credenciales (client_id, client_secret)
 - Endpoints CRUD para clientes: POST, GET, PUT, DELETE /api/v1/clients
 - Endpoint POST /api/v1/clients/{client_id}/regenerate-secret para regenerar secretos
@@ -46,6 +50,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Configuración de expiración de tokens JWT en archivo .env
 - Problema de tokens que expiraban inmediatamente después del login
 - Validación de tokens en endpoints protegidos
+- Error de sintaxis JavaScript en método onMaskControlChange() de Image Crop Editor
+- Conflicto entre efectos hover y estado selected en lista de imágenes
+- Pérdida de selección visual al regenerar lista de imágenes
+- Botones de acción habilitados sin selección de máscara en Image Crop Editor
 
 ### Técnico
 - Migración automática de base de datos para cambio de is_superuser a role

@@ -153,3 +153,59 @@ client_id
 #### Problema 4: Archivos Temporales en Control de Versiones
 **Descripción**: Archivos `.pyc` y `.db` estaban siendo incluidos en el repositorio.
 **Solución**: Actualizar `.gitignore` para excluir estos archivos automáticamente.
+
+# Prompt 4
+
+Ahora implementaremos el sistema de enmascaramiento de imágenes. Disponemos de archivos PNG en el directorio "./samples/mask/editables/" que definen los tipos de credenciales:
+
+Tipos de máscaras disponibles:
+- Tipo 1: t1_back.png y t1_front.png
+- Tipo 2: t2_back.png y t2_front.png  
+- Tipo 3: t3_back.png y t3_front.png
+
+En el editor de imágenes (#image-crop-editor.html), agregaremos una barra de herramientas debajo del header con los siguientes controles:
+1. Un dropdown para seleccionar el tipo de credencial (1, 2 o 3)
+2. Un dropdown para seleccionar el lado (front/delantera o back/trasera)
+
+Al seleccionar estas opciones, se cargará automáticamente el archivo PNG correspondiente como máscara en el canvas. La máscara tiene las siguientes características:
+- Tamaño fijo de 709px × 490px (igual que el canvas)
+- Color rojo con transparencia para visualizar la imagen subyacente
+- Comportamiento estático (no editable)
+
+Nota importante: Los controles de edición deben afectar únicamente a la imagen subyacente, no a la máscara. La máscara sirve únicamente como guía de posicionamiento.
+
+## Problemas Encontrados y Soluciones - Prompt 4
+
+#### Problema 1: Botones de Acción Habilitados Sin Selección de Máscara
+**Descripción**: Los botones "Recortar", "Aplicar", "Guardar", "Centrar" y "Restablecer" estaban habilitados desde el inicio, permitiendo acciones sin haber seleccionado tipo y lado de credencial.
+**Solución**: 
+- Implementación del método `updateActionButtonsState()` que deshabilita los botones hasta que ambos selectores tengan valores
+- Integración en constructor, `onMaskControlChange()` y `resetMaskSelectors()`
+- Uso de clases CSS `disabled` y atributo `disabled` para control visual y funcional
+
+#### Problema 2: Canvas No Se Limpiaba Al Cargar Nueva Carpeta
+**Descripción**: Al seleccionar una nueva carpeta, el canvas mantenía la imagen anterior visible, causando confusión visual.
+**Solución**: 
+- Modificación del método `loadImagesFromFolder()` para incluir `ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)`
+- Reset de variables de imagen (`currentImage`, `originalImage`, `currentImageFile`, `currentImageIndex`)
+- Llamada a `resetMaskSelectors()` para limpiar estado de máscaras
+
+#### Problema 3: Indicador Visual de Selección Inconsistente
+**Descripción**: 
+- El efecto hover interfería con el estado selected
+- La imagen seleccionada no mantenía su resaltado visual
+- El método `renderImageList()` eliminaba la clase `selected` al regenerar la lista
+**Solución**: 
+- Modificación de CSS: `.image-item:hover:not(.selected)` para evitar conflictos
+- Agregado de `!important` a estilos de `.image-item.selected` para prioridad
+- Implementación de lógica en `renderImageList()` para preservar selección actual usando `this.currentImageIndex`
+
+#### Problema 4: Error de Sintaxis JavaScript
+**Descripción**: `SyntaxError: Unexpected identifier 'loadMask'` causado por llave de cierre faltante en `onMaskControlChange()`.
+**Solución**: Corrección de estructura de llaves en el método, asegurando que `this.drawImage()` esté dentro del bloque correcto.
+
+#### Mejoras Implementadas
+1. **Sistema de Control de Estado**: Botones se habilitan/deshabilitan dinámicamente según selección de máscaras
+2. **Limpieza Automática**: Canvas y variables se resetean automáticamente al cambiar carpetas
+3. **Indicador Visual Mejorado**: Gradiente azul, sombra y desplazamiento para imagen seleccionada
+4. **Persistencia de Selección**: La selección visual se mantiene incluso al actualizar la lista de imágenes

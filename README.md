@@ -26,6 +26,16 @@ API básica desarrollada con FastAPI para extracción de información de credenc
 - **Docker Compose** - Orquestación de servicios
 - **Timezone**: America/Mexico_City
 
+### Herramientas de Interfaz
+- **Image Crop Editor** - Editor web para recorte y procesamiento de imágenes de credenciales
+  - Sistema de máscaras predefinidas para diferentes tipos de credenciales
+  - Controles de transformación (rotación, escala, posición)
+  - Interfaz intuitiva con selección visual de imágenes
+  - Validación de estado y controles dinámicos
+  - Soporte para múltiples formatos de imagen
+- **QR Extractor Pro** - Herramienta especializada para extracción de códigos QR
+- **Image Editor** - Editor básico de imágenes con funcionalidades de ajuste
+
 ## Estructura del Proyecto
 
 ```
