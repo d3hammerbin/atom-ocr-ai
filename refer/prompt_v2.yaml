@@ -1,0 +1,14 @@
+Tenemos un archivo xxxx el cual es un sistema en html y css que os ayuda a hacer crop de imagenes, hay que extraer la parte funcional para generar una nueva version con algunas modificaciones mas praticas tomando como referencia este, el sistema hace un crop y un resize de la imagen dejandola al tamaño exacto para que la podramos tratar en otro programa.
+
+Las funcionalidades principales son:
+    - Crop - Recorte de la imagenn para que encajen en un recuadro con las medidad de 790px de ancho por 490px de alto.
+    - Resize - Este cambia el tamaño de la imagen hasta que encaja con el recuadro del tamaño requerido
+    - Rotation - Esta funcion rota la imagen suavemente para que este en la posicion correcta
+
+Lo que necesitamos:
+    Necesitamos que tenga un selector de carpeta y que nos lea todas las imagenes de la carpeta y las coloque en una lista, la lista mostrara del lado izquierdo de la imagen un icono (que variara de un check color verde para actualizada y una x roja de aun pendiente) y el nombre de la imagen recortado al tamaño de la lista, la idea es que una ves que l aimagen sea ajustada con las caracteristicas ya mencionada se sobre escriba modificada, por lo cual al selecionar el directorio se cargara la lista de la simagenes a editar, tendra un boton de aplicar cambios y otro de guardar, para esto es importante de que la imagen se sobre escriba (ya tenemos un respaldo de estas).
+
+Extras:
+    - Tema obsuro para la pagina.
+    - Gener el nuevo script en la raiz del proyecto.
+    - El directorio inicial para el selector de carpeta sera la carpeta donde se encuentre el proyecto.

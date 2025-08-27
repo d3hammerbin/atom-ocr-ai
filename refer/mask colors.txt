@@ -1,0 +1,2 @@
+Rojo: ff0000
+Verde: 0cff00

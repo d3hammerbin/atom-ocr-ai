@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Imágenes - Crop y Redimensionar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #2d2d44;
+            padding: 20px;
+            border-right: 2px solid #404057;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e2e;
+            margin-left: 300px;
+        }
+
+        .header {
+            background: #2d2d44;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: #2d2d44;
+            color: #e0e0e0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-left: 4px solid #4CAF50;
+            min-width: 300px;
+            max-width: 400px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left-color: #4CAF50;
+        }
+
+        .toast.error {
+            border-left-color: #f44336;
+        }
+
+        .toast.warning {
+            border-left-color: #ff9800;
+        }
+
+        .toast.info {
+            border-left-color: #2196F3;
+        }
+
+        .toast-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .toast-message {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #404057;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #64b5f6;
+        }
+
+        .header p {
+            opacity: 0.8;
+        }
+
+        .folder-selector {
+            background: #3a3a52;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #404057;
+        }
+
+        .folder-selector h3 {
+            color: #64b5f6;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .folder-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .folder-input {
+            flex: 1;
+            padding: 10px;
+            background: #2d2d44;
+            border: 1px solid #404057;
+            border-radius: 5px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .folder-input:focus {
+            outline: none;
+            border-color: #64b5f6;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #64b5f6;
+            color: #1e1e2e;
+        }
+
+        .btn-primary:hover {
+            background: #42a5f5;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            background: #404057;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .image-list {
+            background: #3a3a52;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #404057;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .image-list h3 {
+            color: #64b5f6;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .image-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .image-item:hover {
+            background: #4a4a62;
+        }
+
+        .image-item.selected {
+            background: #64b5f6;
+            color: #1e1e2e;
+            border-color: #42a5f5;
+        }
+
+        .image-status {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 50%;
+        }
+
+        .status-pending {
+            color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .status-completed {
+            color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .image-name {
+            flex: 1;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .canvas-area {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas-container {
+            position: relative;
+            border: 3px solid #64b5f6;
+            border-radius: 10px;
+            overflow: hidden;
+            width: 790px;
+            height: 490px;
+            background: #2d2d44;
+            margin: 0 auto;
+        }
+
+        #imageCanvas {
+            position: absolute;
+            cursor: grab;
+            transition: none;
+        }
+
+        #imageCanvas:active {
+            cursor: grabbing;
+        }
+
+        .crop-info {
+            position: absolute;
+            top: -35px;
+            left: 0;
+            background: #64b5f6;
+            color: #1e1e2e;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(100, 181, 246, 0.8);
+            color: #1e1e2e;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+            font-size: 16px;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(100, 181, 246, 1);
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .controls {
+            background: #3a3a52;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #404057;
+        }
+
+        .controls h3 {
+            color: #64b5f6;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .shortcuts-info {
+            background: #2d2d44;
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .shortcut-item {
+            margin: 8px 0;
+            font-size: 13px;
+            color: #b0b0b0;
+            line-height: 1.4;
+        }
+
+        .shortcut-item strong {
+            color: #e0e0e0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #888;
+            padding: 40px;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .image-info {
+            background: #3a3a52;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #404057;
+        }
+
+        .image-info h3 {
+            color: #64b5f6;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .image-info p {
+            margin: 5px 0;
+            color: #b0b0b0;
+            font-size: 14px;
+        }
+
+        .progress-info {
+            background: #3a3a52;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #404057;
+            text-align: center;
+        }
+
+        .progress-info h3 {
+            color: #64b5f6;
+            margin-bottom: 10px;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #64b5f6;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #b0b0b0;
+            margin-top: 5px;
+        }
+
+        /* Collapsible styles */
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible-header:hover {
+            color: #64b5f6;
+        }
+
+        .toggle-icon {
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding: 0;
+        }
+
+        .toggle-icon.rotated {
+            transform: rotate(-90deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <!-- Selector de carpeta -->
+            <div class="folder-selector">
+                <h3>📁 Selector de Carpeta</h3>
+                <input type="text" id="folderPath" class="folder-input" placeholder="Seleccionar carpeta..." readonly style="width: 100%; margin-bottom: 10px;">
+                <button id="selectFolderBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">Buscar</button>
+                <button id="loadImagesBtn" class="btn btn-success" style="width: 100%;" disabled>Cargar Imágenes</button>
+            </div>
+
+            <!-- Lista de imágenes -->
+            <div class="image-list">
+                <h3>🖼️ Imágenes</h3>
+                <div id="imageListContainer">
+                    <div class="placeholder">
+                        <div>Selecciona una carpeta para comenzar</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de progreso -->
+            <div class="progress-info">
+                <h3>📊 Progreso</h3>
+                <div class="progress-stats">
+                    <div class="stat">
+                        <div class="stat-number" id="totalImages">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number" id="processedImages">0</div>
+                        <div class="stat-label">Procesadas</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number" id="pendingImages">0</div>
+                        <div class="stat-label">Pendientes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de imagen actual -->
+            <div class="image-info hidden" id="imageInfo">
+                <h3>ℹ️ Información</h3>
+                <p><strong>Nombre:</strong> <span id="imageName"></span></p>
+                <p><strong>Tamaño:</strong> <span id="imageSize"></span></p>
+                <p><strong>Dimensiones:</strong> <span id="imageDimensions"></span></p>
+            </div>
+
+            <!-- Controles -->
+            <div class="controls">
+                <h3 class="collapsible-header" id="controlsHeader">🎮 Controles <span class="toggle-icon">▼</span></h3>
+                <div class="shortcuts-info collapsible-content" id="controlsContent">
+                    <div class="shortcut-item">
+                        <strong>🖱️ Arrastrar:</strong> Mover imagen
+                    </div>
+                    <div class="shortcut-item">
+                        <strong>⇧ + Arrastrar:</strong> Rotar imagen (suave)
+                    </div>
+                    <div class="shortcut-item">
+                        <strong>🖱️ Rueda:</strong> Zoom (2% por paso)
+                    </div>
+                    <div class="shortcut-item">
+                            <strong>⇧ + Rueda:</strong> Rotación (0.5° por paso)
+                        </div>
+                    <div class="shortcut-item">
+                        <strong>Botones +/-:</strong> Zoom (10% por paso)
+                    </div>
+                    <div class="shortcut-item">
+                        <strong>Botón ⌂:</strong> Ajustar al contenedor
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>Editor de Imágenes</h1>
+                <p>Carga, recorta y redimensiona tus imágenes con tema oscuro</p>
+            </div>
+
+            <div class="canvas-area">
+                <div class="canvas-container hidden" id="canvasContainer">
+                    <div class="crop-info">Área de Crop: 790 × 490 px</div>
+                    <canvas id="imageCanvas" width="790" height="490"></canvas>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoomInBtn" title="Acercar">+</button>
+                        <button class="zoom-btn" id="zoomOutBtn" title="Alejar">-</button>
+                        <button class="zoom-btn" id="fitBtn" title="Ajustar">⌂</button>
+                    </div>
+                </div>
+
+                <div class="action-buttons hidden" id="actionButtons">
+                    <button id="cropBtn" class="btn btn-primary">Recortar a 790×490</button>
+                    <button id="applyBtn" class="btn btn-success">Aplicar Cambios</button>
+                    <button id="saveBtn" class="btn btn-success">Guardar Imagen</button>
+                    <button id="centerBtn" class="btn btn-secondary">Centrar</button>
+                    <button id="resetBtn" class="btn btn-secondary">Restablecer</button>
+                </div>
+
+                <div id="placeholder" class="placeholder">
+                    <div class="placeholder-icon">🖼️</div>
+                    <h2>Selecciona una imagen para comenzar</h2>
+                    <p>Usa el selector de carpeta para cargar imágenes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ImageCropEditor {
+            constructor() {
+                this.canvas = document.getElementById('imageCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.originalImage = null;
+                this.currentImage = null;
+                this.scale = 1;
+                this.imageX = 0;
+                this.imageY = 0;
+                this.rotation = 0;
+                this.isDragging = false;
+                this.isRotating = false;
+                this.dragStart = { x: 0, y: 0 };
+                this.imageStart = { x: 0, y: 0 };
+                this.cropWidth = 790;
+                this.cropHeight = 490;
+                this.selectedFolder = null;
+                this.imageFiles = [];
+                this.processedImages = new Set();
+                this.currentImageIndex = -1;
+                this.currentImageFile = null;
+
+                this.initializeEventListeners();
+                this.updateProgressStats();
+            }
+
+            // Toast notification system
+            showToast(message, type = 'success', duration = 4000) {
+                const container = document.getElementById('toastContainer');
+                
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icons = {
+                    success: '✓',
+                    error: '✗',
+                    warning: '⚠',
+                    info: 'ℹ'
+                };
+                
+                toast.innerHTML = `
+                    <span class="toast-icon">${icons[type] || icons.success}</span>
+                    <span class="toast-message">${message}</span>
+                    <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Trigger animation
+                setTimeout(() => toast.classList.add('show'), 10);
+                
+                // Auto remove
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }, duration);
+            }
+
+            initializeEventListeners() {
+                // Folder selection
+                document.getElementById('selectFolderBtn').addEventListener('click', this.selectFolder.bind(this));
+                document.getElementById('loadImagesBtn').addEventListener('click', this.loadImagesFromFolder.bind(this));
+
+                // Canvas controls
+                document.getElementById('zoomInBtn').addEventListener('click', () => this.zoom(1.1));
+                document.getElementById('zoomOutBtn').addEventListener('click', () => this.zoom(0.9));
+                document.getElementById('fitBtn').addEventListener('click', this.fitToContainer.bind(this));
+
+                // Action buttons
+                document.getElementById('cropBtn').addEventListener('click', this.cropToFixedSize.bind(this));
+                document.getElementById('applyBtn').addEventListener('click', this.applyChanges.bind(this));
+                document.getElementById('saveBtn').addEventListener('click', this.saveImage.bind(this));
+                document.getElementById('centerBtn').addEventListener('click', this.centerImage.bind(this));
+                document.getElementById('resetBtn').addEventListener('click', this.resetToOriginal.bind(this));
+
+                // Canvas events
+                this.canvas.addEventListener('mousedown', this.startDrag.bind(this));
+                this.canvas.addEventListener('mousemove', this.drag.bind(this));
+                this.canvas.addEventListener('mouseup', this.endDrag.bind(this));
+                this.canvas.addEventListener('wheel', this.handleWheel.bind(this));
+
+                // Collapsible controls
+                document.getElementById('controlsHeader').addEventListener('click', this.toggleControls.bind(this));
+
+                // Keyboard events
+                document.addEventListener('keydown', this.handleKeyDown.bind(this));
+                document.addEventListener('keyup', this.handleKeyUp.bind(this));
+            }
+
+            async selectFolder() {
+                try {
+                    // Usar la API de File System Access si está disponible
+                    if ('showDirectoryPicker' in window) {
+                        // Configurar opciones para iniciar en el directorio del proyecto
+                        const options = {
+                            mode: 'read',
+                            startIn: 'documents' // Fallback si no se puede acceder al directorio actual
+                        };
+                        
+                        const dirHandle = await window.showDirectoryPicker(options);
+                        this.selectedFolder = dirHandle;
+                        document.getElementById('folderPath').value = dirHandle.name;
+                        document.getElementById('loadImagesBtn').disabled = false;
+                    } else {
+                        // Fallback para navegadores que no soportan la API
+                        this.showToast('Tu navegador no soporta la selección de carpetas. Por favor, usa Chrome o Edge.', 'error');
+                    }
+                } catch (error) {
+                    console.log('Selección de carpeta cancelada');
+                }
+            }
+
+            async loadImagesFromFolder() {
+                if (!this.selectedFolder) return;
+
+                this.imageFiles = [];
+                this.processedImages.clear(); // Clear previous processed images
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+
+                try {
+                    for await (const [name, handle] of this.selectedFolder.entries()) {
+                        if (handle.kind === 'file') {
+                            const extension = name.toLowerCase().substring(name.lastIndexOf('.'));
+                            if (imageExtensions.includes(extension)) {
+                                this.imageFiles.push({ name, handle });
+                            }
+                        }
+                    }
+
+                    // Check dimensions of all images and mark those with correct size as processed
+                    await this.checkImageDimensions();
+                    
+                    this.renderImageList();
+                    this.updateProgressStats();
+                } catch (error) {
+                    console.error('Error loading images:', error);
+                    this.showToast('Error al cargar las imágenes de la carpeta', 'error');
+                }
+            }
+
+            async checkImageDimensions() {
+                const checkPromises = this.imageFiles.map(async (imageFile) => {
+                    try {
+                        const file = await imageFile.handle.getFile();
+                        const img = new Image();
+                        
+                        return new Promise((resolve) => {
+                            img.onload = () => {
+                                if (img.width === 790 && img.height === 490) {
+                                    this.processedImages.add(imageFile.name);
+                                    console.log(`Image ${imageFile.name} already has correct dimensions (790x490), marked as processed`);
+                                }
+                                resolve();
+                            };
+                            img.onerror = () => resolve(); // Skip on error
+                            img.src = URL.createObjectURL(file);
+                        });
+                    } catch (error) {
+                        console.error(`Error checking dimensions for ${imageFile.name}:`, error);
+                        return Promise.resolve();
+                    }
+                });
+
+                await Promise.all(checkPromises);
+            }
+
+            renderImageList() {
+                const container = document.getElementById('imageListContainer');
+                container.innerHTML = '';
+
+                if (this.imageFiles.length === 0) {
+                    container.innerHTML = '<div class="placeholder">No se encontraron imágenes</div>';
+                    return;
+                }
+
+                this.imageFiles.forEach((imageFile, index) => {
+                    const imageItem = document.createElement('div');
+                    imageItem.className = 'image-item';
+                    imageItem.dataset.index = index;
+
+                    const status = document.createElement('div');
+                    status.className = 'image-status';
+                    const isProcessed = this.processedImages.has(imageFile.name);
+                    status.className += isProcessed ? ' status-completed' : ' status-pending';
+                    status.textContent = isProcessed ? '✓' : '✗';
+
+                    const name = document.createElement('div');
+                    name.className = 'image-name';
+                    name.textContent = imageFile.name;
+                    name.title = imageFile.name;
+
+                    imageItem.appendChild(status);
+                    imageItem.appendChild(name);
+
+                    imageItem.addEventListener('click', () => this.selectImage(index));
+                    container.appendChild(imageItem);
+                });
+            }
+
+            async selectImage(index) {
+                if (index < 0 || index >= this.imageFiles.length) return;
+
+                // Update selection in UI
+                document.querySelectorAll('.image-item').forEach(item => item.classList.remove('selected'));
+                document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+
+                this.currentImageIndex = index;
+                this.currentImageFile = this.imageFiles[index];
+
+                try {
+                    const file = await this.currentImageFile.handle.getFile();
+                    await this.loadImageFromFile(file);
+                    this.updateImageInfo(file);
+                } catch (error) {
+                    console.error('Error loading image:', error);
+                    this.showToast('Error al cargar la imagen', 'error');
+                }
+            }
+
+            async loadImageFromFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            this.originalImage = img;
+                            this.currentImage = img;
+                            
+                            this.resetTransform();
+                            this.fitToContainer();
+                            this.showCanvas();
+                            
+                            // Check if image already has required dimensions (790x490)
+                            if (img.width === 790 && img.height === 490) {
+                                this.processedImages.add(this.currentImageFile.name);
+                                this.renderImageList();
+                                this.updateProgressStats();
+                                this.showToast(`Imagen ${this.currentImageFile.name} ya tiene las dimensiones correctas (790x490px)`, 'success');
+                                console.log(`Image ${this.currentImageFile.name} already has correct dimensions (790x490), marked as processed`);
+                                
+                                // For images with correct dimensions, set scale to 1 and center perfectly
+                                this.scale = 1;
+                                this.imageX = 0;
+                                this.imageY = 0;
+                                this.drawImage();
+                            } else {
+                                // Show current dimensions for images that need editing
+                                this.showToast(`Imagen cargada: ${img.width}x${img.height}px (requiere 790x490px)`, 'info', 3000);
+                            }
+                            resolve();
+                        };
+                        img.onerror = reject;
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            updateImageInfo(file) {
+                const info = document.getElementById('imageInfo');
+                document.getElementById('imageName').textContent = file.name;
+                document.getElementById('imageSize').textContent = this.formatFileSize(file.size);
+                document.getElementById('imageDimensions').textContent = `${this.originalImage.width} × ${this.originalImage.height} px`;
+                info.classList.remove('hidden');
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            showCanvas() {
+                document.getElementById('placeholder').classList.add('hidden');
+                document.getElementById('canvasContainer').classList.remove('hidden');
+                document.getElementById('actionButtons').classList.remove('hidden');
+                this.drawImage();
+            }
+
+            resetTransform() {
+                this.scale = 1;
+                this.imageX = 0;
+                this.imageY = 0;
+                this.rotation = 0;
+            }
+
+            fitToContainer() {
+                if (!this.originalImage) return;
+
+                const containerWidth = this.cropWidth;
+                const containerHeight = this.cropHeight;
+                const imageWidth = this.originalImage.width;
+                const imageHeight = this.originalImage.height;
+
+                const scaleX = containerWidth / imageWidth;
+                const scaleY = containerHeight / imageHeight;
+                this.scale = Math.min(scaleX, scaleY) * 0.9;
+
+                this.centerImage();
+            }
+
+            centerImage() {
+                if (!this.originalImage) return;
+
+                const scaledWidth = this.originalImage.width * this.scale;
+                const scaledHeight = this.originalImage.height * this.scale;
+
+                this.imageX = (this.cropWidth - scaledWidth) / 2;
+                this.imageY = (this.cropHeight - scaledHeight) / 2;
+
+                this.drawImage();
+            }
+
+            zoom(factor) {
+                this.scale *= factor;
+                this.scale = Math.max(0.1, Math.min(5, this.scale));
+                this.drawImage();
+            }
+
+            drawImage() {
+                if (!this.currentImage) return;
+
+                this.ctx.clearRect(0, 0, this.cropWidth, this.cropHeight);
+                this.ctx.save();
+
+                const centerX = this.imageX + (this.originalImage.width * this.scale) / 2;
+                const centerY = this.imageY + (this.originalImage.height * this.scale) / 2;
+
+                this.ctx.translate(centerX, centerY);
+                this.ctx.rotate((this.rotation * Math.PI) / 180);
+                this.ctx.translate(-centerX, -centerY);
+
+                this.ctx.drawImage(
+                    this.currentImage,
+                    this.imageX,
+                    this.imageY,
+                    this.originalImage.width * this.scale,
+                    this.originalImage.height * this.scale
+                );
+
+                this.ctx.restore();
+            }
+
+            startDrag(e) {
+                this.isDragging = true;
+                this.isRotating = e.shiftKey;
+                this.dragStart = { x: e.offsetX, y: e.offsetY };
+                this.imageStart = { x: this.imageX, y: this.imageY };
+                this.rotationStart = this.rotation;
+                this.canvas.style.cursor = this.isRotating ? 'crosshair' : 'grabbing';
+            }
+
+            drag(e) {
+                if (!this.isDragging) return;
+
+                const deltaX = e.offsetX - this.dragStart.x;
+                const deltaY = e.offsetY - this.dragStart.y;
+
+                if (this.isRotating) {
+                    // Calcular rotación basada en el movimiento del mouse desde el punto inicial
+                    const centerX = this.cropWidth / 2;
+                    const centerY = this.cropHeight / 2;
+                    
+                    const startAngle = Math.atan2(this.dragStart.y - centerY, this.dragStart.x - centerX);
+                    const currentAngle = Math.atan2(e.offsetY - centerY, e.offsetX - centerX);
+                    
+                    const deltaAngle = (currentAngle - startAngle) * (180 / Math.PI);
+                    this.rotation = this.rotationStart + deltaAngle;
+                    
+                    // Mantener rotación entre -180 y 180
+                    if (this.rotation > 180) this.rotation -= 360;
+                    if (this.rotation < -180) this.rotation += 360;
+                } else {
+                    this.imageX = this.imageStart.x + deltaX;
+                    this.imageY = this.imageStart.y + deltaY;
+                }
+
+                this.drawImage();
+            }
+
+            endDrag() {
+                this.isDragging = false;
+                this.isRotating = false;
+                this.canvas.style.cursor = 'grab';
+            }
+
+            handleWheel(e) {
+                e.preventDefault();
+
+                if (e.shiftKey) {
+                    // Rotation with shift + wheel - reducir sensibilidad
+                    this.rotation += e.deltaY > 0 ? 0.5 : -0.5;
+                } else {
+                    // Zoom with wheel
+                    const zoomFactor = e.deltaY > 0 ? 0.98 : 1.02;
+                    this.zoom(zoomFactor);
+                }
+
+                this.drawImage();
+            }
+
+            handleKeyDown(e) {
+                if (e.key === 'Shift') {
+                    this.canvas.style.cursor = 'crosshair';
+                }
+            }
+
+            handleKeyUp(e) {
+                if (e.key === 'Shift' && !this.isDragging) {
+                    this.canvas.style.cursor = 'grab';
+                }
+            }
+
+            cropToFixedSize() {
+                if (!this.currentImage) return;
+
+                const croppedCanvas = document.createElement('canvas');
+                croppedCanvas.width = this.cropWidth;
+                croppedCanvas.height = this.cropHeight;
+                const croppedCtx = croppedCanvas.getContext('2d');
+
+                // Copy current canvas content
+                croppedCtx.drawImage(this.canvas, 0, 0);
+
+                // Update current image
+                const croppedImage = new Image();
+                croppedImage.onload = () => {
+                    this.currentImage = croppedImage;
+                    this.resetTransform();
+                    this.centerImage();
+                    this.showToast('Imagen recortada a 790x490px correctamente', 'success');
+                };
+                croppedImage.src = croppedCanvas.toDataURL();
+            }
+
+            applyChanges() {
+                if (!this.currentImageFile) return;
+
+                try {
+                    this.showToast('Cambios aplicados. Use "Guardar Imagen" para sobrescribir el archivo.', 'info');
+                } catch (error) {
+                    console.error('Error applying changes:', error);
+                    this.showToast('Error al aplicar los cambios', 'error');
+                }
+            }
+
+            async saveImage() {
+                if (!this.currentImageFile) return;
+
+                try {
+                    console.log('Starting save process...');
+                    console.log('Current image file:', this.currentImageFile);
+                    console.log('File handle available:', !!this.currentImageFile.handle);
+
+                    // Create final canvas with current transformations
+                    const finalCanvas = document.createElement('canvas');
+                    finalCanvas.width = this.cropWidth;
+                    finalCanvas.height = this.cropHeight;
+                    const finalCtx = finalCanvas.getContext('2d');
+
+                    // Draw current canvas content
+                    finalCtx.drawImage(this.canvas, 0, 0);
+
+                    // Convert to blob (preserve original format if possible)
+                    const originalFile = await this.currentImageFile.handle.getFile();
+                    const originalType = originalFile.type || 'image/png';
+                    const blob = await new Promise(resolve => {
+                        finalCanvas.toBlob(resolve, originalType, 0.95);
+                    });
+
+                    // Overwrite original file
+                    const writable = await this.currentImageFile.handle.createWritable();
+                    console.log('Writable stream created');
+                    
+                    await writable.write(blob);
+                    console.log('Blob written to file');
+                    
+                    await writable.close();
+                    console.log('File stream closed');
+
+                    // Mark as processed
+                    this.processedImages.add(this.currentImageFile.name);
+                    this.renderImageList();
+                    this.updateProgressStats();
+
+                    this.showToast('Imagen guardada exitosamente (archivo original sobrescrito)', 'success');
+                    console.log('File overwritten successfully');
+                } catch (error) {
+                    console.error('Error saving image:', error);
+                    this.showToast('Error al guardar la imagen: ' + error.message, 'error');
+                }
+            }
+
+            resetToOriginal() {
+                if (!this.originalImage) return;
+
+                this.currentImage = this.originalImage;
+                this.resetTransform();
+                this.fitToContainer();
+            }
+
+            toggleControls() {
+                const content = document.getElementById('controlsContent');
+                const icon = document.querySelector('#controlsHeader .toggle-icon');
+                
+                content.classList.toggle('collapsed');
+                icon.classList.toggle('rotated');
+            }
+
+            updateProgressStats() {
+                const total = this.imageFiles.length;
+                const processed = this.processedImages.size;
+                const pending = total - processed;
+
+                document.getElementById('totalImages').textContent = total;
+                document.getElementById('processedImages').textContent = processed;
+                document.getElementById('pendingImages').textContent = pending;
+            }
+        }
+
+        // Initialize the editor when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ImageCropEditor();
+        });
+    </script>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+</body>
+</html>
