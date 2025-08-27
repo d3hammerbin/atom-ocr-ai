@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     # Configuración JWT
     secret_key: str = "your-secret-key-change-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 480  # 8 horas para facilitar pruebas
-    refresh_token_expire_days: int = 7
+    access_token_expire_minutes: int = 1440  # 24 horas para facilitar pruebas
+    refresh_token_expire_days: int = 30  # 30 días
     
     # Configuración de la aplicación
     app_name: str = "Atom OCR AI"

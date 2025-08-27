@@ -146,3 +146,100 @@ class ErrorResponse(BaseModel):
                 "details": "El usuario o contraseña proporcionados son incorrectos"
             }
         }
+
+# Esquemas para clientes
+class ClientCreate(BaseModel):
+    """Esquema para creación de cliente"""
+    name: str = Field(..., min_length=1, max_length=100, description="Nombre del cliente")
+    description: Optional[str] = Field(None, max_length=500, description="Descripción del cliente")
+    
+    @validator('name')
+    def validate_name(cls, v):
+        if not v.strip():
+            raise ValueError('El nombre del cliente no puede estar vacío')
+        return v.strip()
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Mi Aplicación Web",
+                "description": "Cliente para acceder a los recursos de mi aplicación web"
+            }
+        }
+
+class ClientResponse(BaseModel):
+    """Esquema para respuesta de información de cliente"""
+    id: int
+    name: str
+    description: Optional[str] = None
+    client_id: str
+    client_secret: str
+    is_active: bool
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+    last_used: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "name": "Mi Aplicación Web",
+                "description": "Cliente para acceder a los recursos de mi aplicación web",
+                "client_id": "abc123def456ghi789jkl012mno345pq",
+                "client_secret": "xyz789uvw456rst123opq890lmn567hij234efg901bcd678",
+                "is_active": True,
+                "user_id": 1,
+                "created_at": "2024-01-15T10:30:00Z",
+                "updated_at": "2024-01-15T10:30:00Z",
+                "last_used": None
+            }
+        }
+
+class ClientUpdate(BaseModel):
+    """Esquema para actualización de cliente"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100, description="Nombre del cliente")
+    description: Optional[str] = Field(None, max_length=500, description="Descripción del cliente")
+    is_active: Optional[bool] = Field(None, description="Estado activo del cliente")
+    
+    @validator('name')
+    def validate_name(cls, v):
+        if v is not None and not v.strip():
+            raise ValueError('El nombre del cliente no puede estar vacío')
+        return v.strip() if v else v
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Mi Aplicación Web Actualizada",
+                "description": "Descripción actualizada del cliente",
+                "is_active": True
+            }
+        }
+
+class ClientListResponse(BaseModel):
+    """Esquema para respuesta de lista de clientes"""
+    id: int
+    name: str
+    description: Optional[str] = None
+    client_id: str
+    is_active: bool
+    user_id: int
+    created_at: datetime
+    last_used: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "name": "Mi Aplicación Web",
+                "description": "Cliente para acceder a los recursos de mi aplicación web",
+                "client_id": "abc123def456ghi789jkl012mno345pq",
+                "is_active": True,
+                "user_id": 1,
+                "created_at": "2024-01-15T10:30:00Z",
+                "last_used": None
+            }
+        }

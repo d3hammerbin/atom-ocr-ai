@@ -213,6 +213,139 @@ Authorization: Bearer <access_token>
 }
 ```
 
+### Gestión de Clientes
+
+#### POST `/api/v1/clients`
+Crea un nuevo cliente para generar credenciales de identificación.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "name": "Mi Aplicación",
+  "description": "Aplicación web para gestión de inventario"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Mi Aplicación",
+  "description": "Aplicación web para gestión de inventario",
+  "client_id": "app_abc123def456",
+  "client_secret": "secret_xyz789uvw012",
+  "is_active": true,
+  "user_id": 1,
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z",
+  "last_used": null
+}
+```
+
+#### GET `/api/v1/clients`
+Obtiene la lista de clientes. Los usuarios normales solo ven sus propios clientes, los administradores ven todos.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `skip` (opcional): Número de registros a omitir (default: 0)
+- `limit` (opcional): Número máximo de registros a devolver (default: 100)
+
+**Response:**
+```json
+{
+  "clients": [
+    {
+      "id": 1,
+      "name": "Mi Aplicación",
+      "description": "Aplicación web para gestión de inventario",
+      "client_id": "app_abc123def456",
+      "is_active": true,
+      "user_id": 1,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z",
+      "last_used": null
+    }
+  ],
+  "total": 1,
+  "skip": 0,
+  "limit": 100
+}
+```
+
+#### GET `/api/v1/clients/{client_id}`
+Obtiene los detalles de un cliente específico.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Mi Aplicación",
+  "description": "Aplicación web para gestión de inventario",
+  "client_id": "app_abc123def456",
+  "client_secret": "secret_xyz789uvw012",
+  "is_active": true,
+  "user_id": 1,
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z",
+  "last_used": null
+}
+```
+
+#### PUT `/api/v1/clients/{client_id}`
+Actualiza la información de un cliente.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "name": "Mi Aplicación Actualizada",
+  "description": "Nueva descripción",
+  "is_active": true
+}
+```
+
+#### DELETE `/api/v1/clients/{client_id}`
+Elimina un cliente del sistema.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+#### POST `/api/v1/clients/{client_id}/regenerate-secret`
+Regenera el client_secret de un cliente.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "client_secret": "secret_new789xyz012",
+  "message": "Client secret regenerado exitosamente"
+}
+```
+
 ### Sistema
 
 #### GET `/health`
@@ -255,7 +388,40 @@ Se incluyen archivos de Postman para facilitar las pruebas de la API:
    - **Logout**: Cerrar sesión e invalidar tokens
    - **Health Check**: Verificar estado de la API
 
-#### Variables de Entorno:
+#### Colección de Postman Renovada (2025)
+
+El proyecto incluye archivos de Postman completamente renovados para facilitar las pruebas de la API:
+
+#### Archivos Incluidos
+- `Atom_OCR_AI.postman_collection.json` - Colección renovada con estructura mejorada
+- `Atom_OCR_AI.postman_environment.json` - Entorno renovado con variables actualizadas
+
+#### Características de la Colección Renovada
+- **Estructura organizada por carpetas:**
+  - Autenticación (Login, Register, User Info, Refresh Token, Logout)
+  - Gestión de Clientes (Create Client, List Clients)
+  - Sistema (Health Check, System Version)
+
+- **Scripts de pre-solicitud y prueba avanzados:**
+  - Manejo automático de tokens JWT
+  - Validación de respuestas y códigos de estado
+  - Manejo de errores específicos (401, 403, 422)
+  - Logging detallado para debugging
+  - Verificación de expiración de tokens
+
+- **Variables de entorno mejoradas:**
+  - Variables de seguimiento (`token_expires_at`, `current_user_id`, `current_user_role`)
+  - Variables de debugging (`debug_mode`, `timeout_ms`)
+  - Variables específicas para pruebas (`test_username`, `test_client_name`)
+
+#### Instrucciones de Uso
+1. Importar ambos archivos JSON en Postman
+2. Seleccionar el entorno "Atom OCR AI - Environment 2025 (Renovado)"
+3. Ejecutar el endpoint "Login" para obtener tokens
+4. Los demás endpoints utilizarán automáticamente los tokens obtenidos
+5. Consultar la documentación interactiva en http://localhost:8000/docs
+
+### Variables de Entorno:
 
 - `base_url`: URL base de la API (http://localhost:8000)
 - `access_token`: Token JWT (se guarda automáticamente tras login)
@@ -323,6 +489,18 @@ PORT=8000
 - `expires_at`: DateTime
 - `is_revoked`: Boolean
 - `created_at`: DateTime
+
+#### Tabla `clients`
+- `id`: Integer (Primary Key)
+- `name`: String(100) - Nombre del cliente/aplicación
+- `description`: Text - Descripción del cliente
+- `client_id`: String(50) (Unique) - Identificador único del cliente
+- `client_secret`: String(100) - Secreto para autenticación
+- `is_active`: Boolean - Estado del cliente
+- `user_id`: Integer (Foreign Key) - Usuario propietario
+- `created_at`: DateTime
+- `updated_at`: DateTime
+- `last_used`: DateTime - Última vez que se usó el cliente
 
 ### Seguridad
 

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from app.database import init_db, create_test_user
-from app.routers import auth
+from app.routers import auth, clients
 from app.config import settings
 
 # Configuración del contexto de la aplicación
@@ -39,6 +39,7 @@ app.add_middleware(
 
 # Incluir routers
 app.include_router(auth.router, prefix="/api/v1", tags=["Autenticación"])
+app.include_router(clients.router, prefix="/api/v1", tags=["Clientes"])
 
 # Endpoint de salud
 @app.get("/health", tags=["Sistema"])

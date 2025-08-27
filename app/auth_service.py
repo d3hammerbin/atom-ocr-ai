@@ -158,14 +158,13 @@ class AuthService:
             if payload.get("type") != token_type:
                 return None
             
-            # Verificar expiración
-            exp = payload.get("exp")
-            if exp and datetime.utcnow() > datetime.fromtimestamp(exp):
-                return None
+            # Verificar expiración - JWT maneja automáticamente la expiración
+            # No necesitamos verificar manualmente ya que jwt.decode lanza una excepción si está expirado
             
             return payload
             
-        except JWTError:
+        except JWTError as e:
+            # Token inválido o expirado
             return None
     
     def get_refresh_token(self, token: str) -> Optional[RefreshToken]:

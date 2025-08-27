@@ -86,3 +86,47 @@ El endpoint `/api/v1/userinfo` ahora funciona correctamente y retorna la informa
 
 **Recomendación para futuros desarrollos**: 
 Al realizar cambios en modelos de base de datos, verificar sistemáticamente todos los endpoints que referencien los campos modificados para evitar errores de atributos inexistentes.
+
+# Prompt 3
+
+Implemente la funcionalidad para que tanto usuarios normales como administradores puedan crear clientes, con el objetivo de que los usuarios generen sus propias credenciales de identificación para aplicaciones autenticadas que accederán a recursos futuros. 
+
+Requisitos:
+1. Cree una tabla de clientes que:
+   - Esté relacionada con el usuario creador mediante una clave foránea
+   - Contenga los campos necesarios para credenciales de identificación
+2. Permisos de acceso:
+   - Usuarios normales pueden:
+     - Crear nuevos clientes
+     - Ver/consultar únicamente sus propios clientes
+   - Administradores pueden:
+     - Ver/consultar todos los clientes del sistema
+3. La implementación debe ser escalable para soportar recursos adicionales que se agregarán posteriormente.
+
+## Problemas Encontrados y Soluciones
+
+### Renovación de Archivos Postman (Enero 2025)
+
+#### Problema 1: Sintaxis de PowerShell
+**Descripción**: Al intentar reiniciar WSL con el comando `wsl --shutdown && wsl`, PowerShell no reconoció el operador `&&`.
+**Error**: `El token '&&' no es un separador de instrucciones válido en esta versión.`
+**Solución**: Usar la sintaxis correcta de PowerShell con punto y coma: `wsl --shutdown; wsl`
+
+#### Problema 2: Estructura de Colección Postman
+**Descripción**: La colección original tenía una estructura básica sin organización por carpetas y scripts de prueba limitados.
+**Solución**: 
+- Implementar estructura de carpetas (Autenticación, Gestión de Clientes, Sistema)
+- Agregar scripts de pre-solicitud y prueba robustos
+- Incluir manejo de tokens JWT automático
+- Validación de respuestas y manejo de errores específicos
+
+#### Problema 3: Variables de Entorno Limitadas
+**Descripción**: El entorno original solo contenía variables básicas sin soporte para debugging y seguimiento de estado.
+**Solución**:
+- Agregar variables de seguimiento (`token_expires_at`, `current_user_id`, `current_user_role`)
+- Incluir variables de debugging (`debug_mode`, `timeout_ms`)
+- Variables específicas para pruebas (`test_username`, `test_client_name`)
+
+#### Problema 4: Archivos Temporales en Control de Versiones
+**Descripción**: Archivos `.pyc` y `.db` estaban siendo incluidos en el repositorio.
+**Solución**: Actualizar `.gitignore` para excluir estos archivos automáticamente.
