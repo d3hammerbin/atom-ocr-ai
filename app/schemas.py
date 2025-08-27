@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
@@ -218,8 +218,8 @@ class ClientUpdate(BaseModel):
             }
         }
 
-class ClientListResponse(BaseModel):
-    """Esquema para respuesta de lista de clientes"""
+class ClientListItem(BaseModel):
+    """Esquema para elemento individual en lista de clientes"""
     id: int
     name: str
     description: Optional[str] = None
@@ -231,15 +231,31 @@ class ClientListResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class ClientListResponse(BaseModel):
+    """Esquema para respuesta de lista de clientes con paginación"""
+    clients: List[ClientListItem] = Field(..., description="Lista de clientes")
+    total: int = Field(..., description="Total de clientes")
+    skip: int = Field(..., description="Registros omitidos")
+    limit: int = Field(..., description="Límite de registros")
+    
+    class Config:
         json_schema_extra = {
             "example": {
-                "id": 1,
-                "name": "Mi Aplicación Web",
-                "description": "Cliente para acceder a los recursos de mi aplicación web",
-                "client_id": "abc123def456ghi789jkl012mno345pq",
-                "is_active": True,
-                "user_id": 1,
-                "created_at": "2024-01-15T10:30:00Z",
-                "last_used": None
+                "clients": [
+                    {
+                        "id": 1,
+                        "name": "Mi Aplicación Web",
+                        "description": "Cliente para acceder a los recursos de mi aplicación web",
+                        "client_id": "abc123def456ghi789jkl012mno345pq",
+                        "is_active": True,
+                        "user_id": 1,
+                        "created_at": "2024-01-15T10:30:00Z",
+                        "last_used": None
+                    }
+                ],
+                "total": 1,
+                "skip": 0,
+                "limit": 100
             }
         }

@@ -105,6 +105,29 @@ Requisitos:
 
 ## Problemas Encontrados y Soluciones
 
+### Error de Validación en Endpoint de Lista de Clientes (Enero 2025)
+
+#### Problema: Esquema ClientListResponse Incorrecto
+**Descripción**: El endpoint GET /clients generaba errores de validación de Pydantic debido a que el esquema `ClientListResponse` estaba definido incorrectamente como un esquema individual de cliente en lugar de un esquema que contenga una lista de clientes con metadatos de paginación.
+
+**Error observado**:
+```
+client_id
+  Field required [type=missing, input_value={'clients': [<Client(id=1...'skip': 0, 'limit': 100}, input_type=dict]
+```
+
+**Solución implementada**:
+1. Creación del esquema `ClientListItem` para elementos individuales
+2. Redefinición de `ClientListResponse` con estructura correcta:
+   - `clients: List[ClientListItem]` - Lista de clientes
+   - `total: int` - Total de registros
+   - `skip: int` - Registros omitidos
+   - `limit: int` - Límite de registros
+3. Actualización de importaciones agregando `List` desde `typing`
+4. Reinicio del servidor para aplicar cambios
+
+**Resultado**: El endpoint `/clients` ahora funciona correctamente y retorna la lista de clientes con paginación sin errores de validación.
+
 ### Renovación de Archivos Postman (Enero 2025)
 
 #### Problema 1: Sintaxis de PowerShell
