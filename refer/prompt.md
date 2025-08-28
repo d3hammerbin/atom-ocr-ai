@@ -209,3 +209,9 @@ Nota importante: Los controles de edición deben afectar únicamente a la imagen
 2. **Limpieza Automática**: Canvas y variables se resetean automáticamente al cambiar carpetas
 3. **Indicador Visual Mejorado**: Gradiente azul, sombra y desplazamiento para imagen seleccionada
 4. **Persistencia de Selección**: La selección visual se mantiene incluso al actualizar la lista de imágenes
+
+# Prompt 5
+
+Ahora comenzarems con algo mas complejo que es la deteccion del tipo de credencial segun las imagenes proporcionadas, se pretende categorizar tanto el tipo como el lado, por lo cual vamos a requerir de algunas herramientas adicionales como OpenCV, Tesseract y alternativas similares para el proposito.
+
+* Pasar a escala de grises (Conservar la de "color")
