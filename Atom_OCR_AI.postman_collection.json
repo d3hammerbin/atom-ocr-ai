@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "atom-ocr-ai-2025",
-		"name": "Atom OCR AI - API Collection 2025 (Renovada)",
+		"name": "Atom OCR AI - API Collection 2025",
 		"description": "Colección completa renovada para la API de Atom OCR AI con todos los endpoints disponibles, debugging avanzado y manejo robusto de tokens JWT",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "atom-ocr-ai",
