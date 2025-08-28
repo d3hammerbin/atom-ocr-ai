@@ -259,3 +259,108 @@ class ClientListResponse(BaseModel):
                 "limit": 100
             }
         }
+
+
+# Esquemas para carga de imágenes
+class CredentialSideEnum(str, Enum):
+    """Enum para lados de credencial"""
+    FRONT = "front"
+    BACK = "back"
+
+
+class DocumentTypeEnum(int, Enum):
+    """Enum para tipos de documento"""
+    TYPE_1 = 1
+    TYPE_2 = 2
+    TYPE_3 = 3
+
+
+class ImageUploadRequest(BaseModel):
+    """Esquema para solicitud de carga de imagen"""
+    credential_side: CredentialSideEnum = Field(..., description="Lado de la credencial (front/back)")
+    document_type: DocumentTypeEnum = Field(..., description="Tipo de documento (1, 2, 3)")
+    client_id: int = Field(..., description="ID del cliente asociado")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "credential_side": "front",
+                "document_type": 1,
+                "client_id": 1
+            }
+        }
+
+
+class ImageUploadResponse(BaseModel):
+    """Esquema para respuesta de carga de imagen"""
+    id: int = Field(..., description="ID del registro creado")
+    filename: str = Field(..., description="Nombre del archivo generado")
+    original_filename: str = Field(..., description="Nombre original del archivo")
+    credential_side: str = Field(..., description="Lado de la credencial")
+    document_type: int = Field(..., description="Tipo de documento")
+    client_id: int = Field(..., description="ID del cliente")
+    user_id: int = Field(..., description="ID del usuario")
+    is_processed: bool = Field(..., description="Estado de procesamiento")
+    created_at: datetime = Field(..., description="Fecha de creación")
+    
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "filename": "a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg",
+                "original_filename": "credencial_frontal.jpg",
+                "credential_side": "front",
+                "document_type": 1,
+                "client_id": 1,
+                "user_id": 1,
+                "is_processed": False,
+                "created_at": "2024-01-15T10:30:00Z"
+            }
+        }
+
+
+class IdsWarehouseListItem(BaseModel):
+    """Esquema para elemento de lista de imágenes almacenadas"""
+    id: int
+    filename: str
+    original_filename: Optional[str] = None
+    credential_side: str
+    document_type: int
+    is_processed: bool
+    is_rejected: bool
+    created_at: datetime
+    processed_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class IdsWarehouseListResponse(BaseModel):
+    """Esquema para respuesta de lista de imágenes almacenadas"""
+    images: List[IdsWarehouseListItem] = Field(..., description="Lista de imágenes")
+    total: int = Field(..., description="Total de imágenes")
+    skip: int = Field(..., description="Registros omitidos")
+    limit: int = Field(..., description="Límite de registros")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "images": [
+                    {
+                        "id": 1,
+                        "filename": "a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg",
+                        "original_filename": "credencial_frontal.jpg",
+                        "credential_side": "front",
+                        "document_type": 1,
+                        "is_processed": False,
+                        "is_rejected": False,
+                        "created_at": "2024-01-15T10:30:00Z",
+                        "processed_at": None
+                    }
+                ],
+                "total": 1,
+                "skip": 0,
+                "limit": 100
+            }
+        }

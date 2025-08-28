@@ -212,6 +212,57 @@ Nota importante: Los controles de edición deben afectar únicamente a la imagen
 
 # Prompt 5
 
-Ahora comenzarems con algo mas complejo que es la deteccion del tipo de credencial segun las imagenes proporcionadas, se pretende categorizar tanto el tipo como el lado, por lo cual vamos a requerir de algunas herramientas adicionales como OpenCV, Tesseract y alternativas similares para el proposito.
+Hemos completado la investigación para avanzar con la clasificación de credenciales de identificación y sus lados, basándonos en características documentadas previamente. El siguiente paso consiste en implementar un nuevo endpoint para la carga de imágenes con los siguientes requisitos:
 
-* Pasar a escala de grises (Conservar la de "color")
+1. Funcionalidad de carga:
+   - Procesar una imagen por vez
+   - Aceptar campos adicionales:
+     * Lado de la credencial (back/front)
+     * Tipo de documento (1, 2, 3)
+
+2. Procesamiento inicial:
+   - Convertir la imagen a escala de grises manteniendo su formato original
+   - Almacenar temporalmente en "./entropy/temp/"
+   - Generar un nombre único usando UUID conservando la extensión original
+
+3. Almacenamiento de metadatos:
+   - Crear tabla "ids_warehouse" con campos:
+     * ID autoincremental
+     * Relación con usuario (tabla: users)
+     * Relación con clientes (tabla: clients)
+     * Nombre del archivo (post UUID y conversión)
+     * Fechas de creación y actualización
+     * Campo booleano para estado (procesado/rechazado)
+
+4. Gestión de datos:
+   - Actualizar registros según las acciones aplicadas
+   - Implementar soft delete para registros (marcado booleano)
+
+## Problemas Encontrados y Soluciones Implementadas
+
+#### Problema 1: Conflicto de Rutas en FastAPI
+**Descripción**: El endpoint `/{client_id}` en el router de clientes estaba capturando la ruta `/images`, interpretando "images" como un `client_id`, causando errores 422 de validación.
+**Solución**: 
+- Reordenamiento de inclusión de routers en `main.py`, colocando el router de imágenes antes que el de clientes
+- Agregado del prefijo `/clients` al router de clientes para evitar conflictos
+- Eliminación del prefijo `/clients` de los endpoints individuales en `clients.py`
+
+#### Problema 2: Base de Datos Vacía Después de Migraciones
+**Descripción**: Alembic indicaba que las migraciones se habían aplicado correctamente, pero el archivo `atom_ocr.db` tenía 0 bytes y no contenía tablas.
+**Solución**: Ejecución manual de `alembic upgrade head` para aplicar correctamente las migraciones y crear las tablas necesarias.
+
+#### Problema 3: Archivos de Cache Python en Control de Versiones
+**Descripción**: Archivos `.pyc` y directorios `__pycache__` estaban siendo rastreados por git a pesar de estar en `.gitignore`.
+**Solución**: 
+- Remoción de archivos de cache del índice de git usando `git rm --cached`
+- Verificación de que las reglas en `.gitignore` (`__pycache__/` y `*.py[cod]`) estén correctamente configuradas
+
+#### Problema 4: Validación de Enum en Modelo de Base de Datos
+**Descripción**: Error `LookupError` indicando que "front" no es un valor válido para el enum `credentialside`, que solo acepta "FRONT" y "BACK".
+**Solución**: Asegurar que los valores del enum se envíen en mayúsculas según la definición del modelo.
+
+#### Mejoras de Configuración Implementadas
+1. **Estructura de Rutas Mejorada**: Prefijos claros para evitar conflictos entre diferentes módulos
+2. **Gestión de Base de Datos**: Verificación de estado de migraciones y aplicación correcta
+3. **Control de Versiones Limpio**: Exclusión apropiada de archivos temporales y de cache
+4. **Validación de Datos**: Consistencia en formatos de enum y tipos de datos

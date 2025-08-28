@@ -32,7 +32,7 @@ def can_view_all_clients(current_user: User) -> bool:
     """Verifica si el usuario puede ver todos los clientes (solo admins)"""
     return current_user.role == UserRole.ADMIN
 
-@router.post("/clients", response_model=ClientResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ClientResponse, status_code=status.HTTP_201_CREATED)
 async def create_client(
     client_data: ClientCreate,
     current_user = Depends(get_current_user),
@@ -81,7 +81,7 @@ async def create_client(
             detail="Error interno del servidor"
         )
 
-@router.get("/clients", response_model=ClientListResponse)
+@router.get("/", response_model=ClientListResponse)
 async def list_clients(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a devolver"),

@@ -7,7 +7,7 @@
 		"_exporter_id": "atom-ocr-ai",
 		"version": {
 			"major": 2,
-			"minor": 0,
+			"minor": 1,
 			"patch": 0
 		}
 	},
@@ -402,6 +402,300 @@
 			]
 		},
 		{
+			"name": "📸 Gestión de Imágenes",
+			"description": "Endpoints para carga, procesamiento y gestión de imágenes",
+			"item": [
+				{
+					"name": "Upload Image",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log('📸 === PRE-REQUEST UPLOAD IMAGE === 📸');",
+									"const token = pm.environment.get('access_token');",
+									"console.log('🔧 Access Token disponible:', token ? 'SÍ' : 'NO');",
+									"if (!token) console.log('🚨 WARNING: No access token found!');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA UPLOAD IMAGE === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 201) {",
+									"    console.log('🎉 IMAGEN CARGADA EXITOSAMENTE 🎉');",
+									"    let response = pm.response.json();",
+									"    if (response.id) {",
+									"        pm.environment.set('last_uploaded_image_id', response.id);",
+									"        console.log('💾 Image ID guardado:', response.id);",
+									"    }",
+									"    console.log('📸 Archivo:', response.filename);",
+									"    console.log('📏 Tamaño:', response.file_size, 'bytes');",
+									"    pm.test('✅ Image uploaded successfully', () => pm.response.to.have.status(201));",
+									"} else {",
+									"    console.log('❌ CARGA DE IMAGEN FALLÓ - Status:', pm.response.code);",
+									"    pm.test('❌ Image upload failed', () => pm.expect.fail('Image upload failed'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Archivo de imagen a cargar"
+								},
+								{
+									"key": "credential_side",
+									"value": "{{test_document_side}}",
+									"type": "text",
+									"description": "Lado del documento (front/back)"
+								},
+								{
+									"key": "document_type",
+									"value": "{{test_document_type}}",
+									"type": "text",
+									"description": "Tipo de documento (cedula, pasaporte, licencia)"
+								},
+								{
+									"key": "client_id",
+									"value": "{{last_created_client_id}}",
+									"type": "text",
+									"description": "ID del cliente (opcional)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/upload-image",
+							"host": ["{{base_url}}"],
+							"path": ["upload-image"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Images",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA LIST IMAGES === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('✅ LISTA DE IMÁGENES OBTENIDA');",
+									"    let response = pm.response.json();",
+									"    console.log('📋 Total de imágenes:', response.length || 0);",
+									"    if (response.length > 0) {",
+									"        console.log('📸 Primera imagen:', response[0].filename);",
+									"    }",
+									"    pm.test('✅ Images list retrieved', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ ERROR AL OBTENER IMÁGENES - Status:', pm.response.code);",
+									"    pm.test('❌ Images list failed', () => pm.expect.fail('Failed to get images'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/images?skip=0&limit={{images_pagination_limit}}",
+							"host": ["{{base_url}}"],
+							"path": ["images"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0",
+									"description": "Número de registros a omitir"
+								},
+								{
+									"key": "limit",
+									"value": "{{images_pagination_limit}}",
+									"description": "Número máximo de registros a devolver"
+								},
+								{
+									"key": "client_id",
+									"value": "",
+									"description": "Filtrar por ID del cliente",
+									"disabled": true
+								},
+								{
+									"key": "document_type",
+									"value": "",
+									"description": "Filtrar por tipo de documento",
+									"disabled": true
+								},
+								{
+									"key": "side",
+									"value": "",
+									"description": "Filtrar por lado (front/back)",
+									"disabled": true
+								},
+								{
+									"key": "is_processed",
+									"value": "",
+									"description": "Filtrar por estado de procesamiento",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Process Image",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA PROCESS IMAGE === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('✅ IMAGEN MARCADA COMO PROCESADA');",
+									"    let response = pm.response.json();",
+									"    console.log('📸 Imagen:', response.filename);",
+									"    console.log('✅ Estado procesado:', response.is_processed);",
+									"    pm.test('✅ Image processed successfully', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ ERROR AL PROCESAR IMAGEN - Status:', pm.response.code);",
+									"    pm.test('❌ Image processing failed', () => pm.expect.fail('Failed to process image'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/images/{{last_uploaded_image_id}}/process",
+							"host": ["{{base_url}}"],
+							"path": ["images", "{{last_uploaded_image_id}}", "process"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reject Image",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA REJECT IMAGE === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('✅ IMAGEN MARCADA COMO RECHAZADA');",
+									"    let response = pm.response.json();",
+									"    console.log('📸 Imagen:', response.filename);",
+									"    console.log('❌ Estado rechazado:', response.is_rejected);",
+									"    pm.test('✅ Image rejected successfully', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ ERROR AL RECHAZAR IMAGEN - Status:', pm.response.code);",
+									"    pm.test('❌ Image rejection failed', () => pm.expect.fail('Failed to reject image'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/images/{{last_uploaded_image_id}}/reject",
+							"host": ["{{base_url}}"],
+							"path": ["images", "{{last_uploaded_image_id}}", "reject"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Image",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('📊 === RESPUESTA DELETE IMAGE === 📊');",
+									"console.log('Status Code:', pm.response.code);",
+									"",
+									"if (pm.response.code === 200) {",
+									"    console.log('✅ IMAGEN ELIMINADA (SOFT DELETE)');",
+									"    let response = pm.response.json();",
+									"    console.log('📸 Imagen:', response.filename);",
+									"    console.log('🗑️ Eliminada:', response.is_deleted);",
+									"    pm.test('✅ Image deleted successfully', () => pm.response.to.have.status(200));",
+									"} else {",
+									"    console.log('❌ ERROR AL ELIMINAR IMAGEN - Status:', pm.response.code);",
+									"    pm.test('❌ Image deletion failed', () => pm.expect.fail('Failed to delete image'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/images/{{last_uploaded_image_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["images", "{{last_uploaded_image_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "🔧 Sistema",
 			"description": "Endpoints para información del sistema y salud",
 			"item": [
@@ -438,15 +732,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/system/health",
-							"host": ["{{base_url}}"],
-							"path": ["system", "health"]
+							"raw": "http://localhost:8000/health",
+							"host": ["http://localhost:8000"],
+							"path": ["health"]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "System Version",
+					"name": "System Info",
 					"event": [
 						{
 							"listen": "test",
@@ -456,18 +750,18 @@
 									"console.log('Status Code:', pm.response.code);",
 									"",
 									"if (pm.response.code === 200) {",
-									"    console.log('✅ VERSIÓN DEL SISTEMA OBTENIDA');",
+									"    console.log('✅ INFORMACIÓN DEL SISTEMA OBTENIDA');",
 									"    try {",
 									"        let response = pm.response.json();",
+									"        console.log('📋 Mensaje:', response.message || 'No disponible');",
 									"        console.log('📋 Versión:', response.version || 'No disponible');",
-									"        console.log('📋 Build:', response.build || 'No disponible');",
 									"    } catch (e) {",
 									"        console.log('Response text:', pm.response.text());",
 									"    }",
-									"    pm.test('✅ System version retrieved', () => pm.response.to.have.status(200));",
+									"    pm.test('✅ System info retrieved', () => pm.response.to.have.status(200));",
 									"} else {",
-									"    console.log('❌ ERROR AL OBTENER VERSIÓN - Status:', pm.response.code);",
-									"    pm.test('❌ System version failed', () => pm.expect.fail('Version check failed'));",
+									"    console.log('❌ ERROR AL OBTENER INFORMACIÓN - Status:', pm.response.code);",
+									"    pm.test('❌ System info failed', () => pm.expect.fail('Info check failed'));",
 									"}"
 								],
 								"type": "text/javascript"
@@ -478,9 +772,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/system/version",
-							"host": ["{{base_url}}"],
-							"path": ["system", "version"]
+							"raw": "http://localhost:8000/",
+							"host": ["http://localhost:8000"],
+							"path": [""]
 						}
 					},
 					"response": []

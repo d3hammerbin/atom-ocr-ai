@@ -90,3 +90,39 @@ class Client(Base):
     def generate_client_secret() -> str:
         """Genera un client_secret único de 64 caracteres"""
         return ''.join(secrets.choice(string.ascii_letters + string.digits + string.punctuation.replace('"', '').replace("'", '')) for _ in range(64))
+
+
+class IdsWarehouse(Base):
+    """Modelo para almacenamiento de imágenes de credenciales de identificación"""
+    __tablename__ = "ids_warehouse"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Relaciones
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    
+    # Información del archivo
+    filename = Column(String(255), nullable=False, index=True)  # Nombre post UUID y conversión
+    original_filename = Column(String(255), nullable=True)  # Nombre original del archivo
+    
+    # Metadatos de clasificación
+    credential_side = Column(Enum(enum.Enum('CredentialSide', 'FRONT BACK')), nullable=False)
+    document_type = Column(Integer, nullable=False)  # 1, 2, 3
+    
+    # Estado del procesamiento
+    is_processed = Column(Boolean, default=False)
+    is_rejected = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False)  # Soft delete
+    
+    # Metadatos temporales
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Relaciones
+    user = relationship("User")
+    client = relationship("Client")
+    
+    def __repr__(self):
+        return f"<IdsWarehouse(id={self.id}, filename='{self.filename}', user_id={self.user_id}, client_id={self.client_id})>"
