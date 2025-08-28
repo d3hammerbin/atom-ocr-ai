@@ -551,7 +551,7 @@
 									"key": "document_type",
 									"value": "{{test_document_type}}",
 									"type": "text",
-									"description": "Tipo de documento (cedula, pasaporte, licencia)"
+									"description": "Tipo de documento (1, 2, 3)"
 								},
 								{
 									"key": "client_id",
