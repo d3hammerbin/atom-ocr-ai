@@ -154,6 +154,52 @@ client_id
 **Descripción**: Archivos `.pyc` y `.db` estaban siendo incluidos en el repositorio.
 **Solución**: Actualizar `.gitignore` para excluir estos archivos automáticamente.
 
+### Implementación de Sistema de Credenciales de Cliente (Enero 2025)
+
+Se ha implementado un sistema completo de gestión de credenciales de clientes que incluye la generación automática de `client_id` y `client_secret` con las siguientes características:
+
+#### Funcionalidades Implementadas
+
+**1. Generación de Credenciales Seguras**
+- **client_id**: Generado automáticamente usando UUID4 con prefijo "client_" para identificación única
+- **client_secret**: Generado usando `secrets.token_urlsafe(32)` para máxima seguridad criptográfica
+- Ambos campos garantizan unicidad y cumplen estándares de seguridad
+
+**2. Almacenamiento Seguro**
+- **Hashing del client_secret**: Implementado usando HMAC-SHA256 con salt único por cliente
+- **Verificación segura**: Método `verify_client_secret()` para validación sin exponer el secreto original
+- **Separación de responsabilidades**: El secreto hasheado se almacena en BD, el original solo se muestra una vez
+
+**3. Endpoints de API Actualizados**
+- **Creación de cliente**: Genera automáticamente ambas credenciales y las retorna en la respuesta
+- **Regeneración de secreto**: Endpoint dedicado para generar nuevo `client_secret` manteniendo el `client_id`
+- **Respuestas seguras**: Uso de `ClientResponse.from_orm_with_plain_secret()` para manejar secretos temporales
+
+**4. Migración de Base de Datos**
+- Agregada columna `client_secret` a la tabla `clients` con tipo TEXT
+- Migración de Alembic aplicada correctamente para mantener consistencia de datos
+- Campo nullable para compatibilidad con registros existentes
+
+**5. Validaciones y Pruebas**
+- **Colección Postman actualizada**: Pruebas automáticas para validar formato y presencia de credenciales
+- **Almacenamiento en entorno**: Variables de Postman para reutilizar credenciales en pruebas posteriores
+- **Validaciones de formato**: Verificación de longitud y caracteres válidos en ambas credenciales
+
+#### Consideraciones de Seguridad Implementadas
+
+1. **No reversibilidad**: El `client_secret` hasheado no puede ser revertido al valor original
+2. **Salt único**: Cada cliente tiene un salt diferente para prevenir ataques de diccionario
+3. **Exposición mínima**: El secreto original solo se muestra en la respuesta de creación/regeneración
+4. **Validación robusta**: Verificación segura sin necesidad de almacenar el secreto en texto plano
+
+#### Archivos Modificados
+
+- `app/models.py`: Agregado campo `client_secret` y métodos de hashing/verificación
+- `app/routers/clients.py`: Actualizada lógica de creación y regeneración de credenciales
+- `app/schemas.py`: Agregado método `from_orm_with_plain_secret()` para manejo seguro de respuestas
+- `Atom_OCR_AI.postman_collection.json`: Nuevas pruebas para validar credenciales
+- `alembic/versions/`: Nueva migración para agregar columna `client_secret`
+
 # Prompt 4
 
 Ahora implementaremos el sistema de enmascaramiento de imágenes. Disponemos de archivos PNG en el directorio "./samples/mask/editables/" que definen los tipos de credenciales:
@@ -266,3 +312,5 @@ Hemos completado la investigación para avanzar con la clasificación de credenc
 2. **Gestión de Base de Datos**: Verificación de estado de migraciones y aplicación correcta
 3. **Control de Versiones Limpio**: Exclusión apropiada de archivos temporales y de cache
 4. **Validación de Datos**: Consistencia en formatos de enum y tipos de datos
+
+# Prompt 6

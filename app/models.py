@@ -6,6 +6,8 @@ from datetime import datetime
 import enum
 import secrets
 import string
+import hashlib
+import hmac
 
 Base = declarative_base()
 
@@ -90,6 +92,26 @@ class Client(Base):
     def generate_client_secret() -> str:
         """Genera un client_secret único de 64 caracteres"""
         return ''.join(secrets.choice(string.ascii_letters + string.digits + string.punctuation.replace('"', '').replace("'", '')) for _ in range(64))
+    
+    @staticmethod
+    def hash_client_secret(client_secret: str) -> str:
+        """Genera un hash seguro del client_secret usando SHA-256"""
+        return hashlib.sha256(client_secret.encode('utf-8')).hexdigest()
+    
+    def verify_client_secret(self, client_secret: str) -> bool:
+        """Verifica si el client_secret proporcionado coincide con el almacenado"""
+        # Si el client_secret almacenado ya está hasheado (64 caracteres hex)
+        if len(self.client_secret) == 64 and all(c in '0123456789abcdef' for c in self.client_secret.lower()):
+            return hmac.compare_digest(self.client_secret, self.hash_client_secret(client_secret))
+        # Si está en texto plano (para compatibilidad con datos existentes)
+        return hmac.compare_digest(self.client_secret, client_secret)
+    
+    def set_client_secret(self, client_secret: str, hash_secret: bool = True) -> None:
+        """Establece el client_secret, opcionalmente hasheándolo"""
+        if hash_secret:
+            self.client_secret = self.hash_client_secret(client_secret)
+        else:
+            self.client_secret = client_secret
 
 
 class IdsWarehouse(Base):

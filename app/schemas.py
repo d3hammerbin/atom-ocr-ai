@@ -180,6 +180,23 @@ class ClientResponse(BaseModel):
     updated_at: datetime
     last_used: Optional[datetime] = None
     
+    @classmethod
+    def from_orm_with_plain_secret(cls, obj):
+        """Crea una instancia usando el client_secret sin hashear si está disponible"""
+        data = {
+            "id": obj.id,
+            "name": obj.name,
+            "description": obj.description,
+            "client_id": obj.client_id,
+            "client_secret": getattr(obj, '_plain_client_secret', obj.client_secret),
+            "is_active": obj.is_active,
+            "user_id": obj.user_id,
+            "created_at": obj.created_at,
+            "updated_at": obj.updated_at,
+            "last_used": obj.last_used
+        }
+        return cls(**data)
+    
     class Config:
         from_attributes = True
         json_schema_extra = {

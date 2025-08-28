@@ -58,15 +58,18 @@ async def create_client(
             name=client_data.name,
             description=client_data.description,
             client_id=client_id,
-            client_secret=client_secret,
+            client_secret=Client.hash_client_secret(client_secret),
             user_id=current_user.id
         )
+        
+        # Almacenar el client_secret sin hashear temporalmente para la respuesta
+        db_client._plain_client_secret = client_secret
         
         db.add(db_client)
         db.commit()
         db.refresh(db_client)
         
-        return db_client
+        return ClientResponse.from_orm_with_plain_secret(db_client)
         
     except IntegrityError:
         db.rollback()
@@ -187,7 +190,7 @@ async def update_client(
         db.commit()
         db.refresh(client)
         
-        return client
+        return ClientResponse.from_orm_with_plain_secret(client)
         
     except Exception as e:
         db.rollback()
@@ -263,8 +266,12 @@ async def regenerate_client_secret(
     
     try:
         # Generar nuevo client_secret
-        client.client_secret = Client.generate_client_secret()
+        new_client_secret = Client.generate_client_secret()
+        client.client_secret = Client.hash_client_secret(new_client_secret)
         client.updated_at = datetime.utcnow()
+        
+        # Almacenar el client_secret sin hashear temporalmente para la respuesta
+        client._plain_client_secret = new_client_secret
         
         db.commit()
         db.refresh(client)
